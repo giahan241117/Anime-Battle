@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Monster Battle Royale</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0d1117;color:#fff;font-family:Arial,sans-serif}
+*{box-sizing:border-box}button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px}
+.hide{display:none!important}
+h1{text-align:center;font-size:clamp(34px,10vw,64px);line-height:.95;margin:0 0 12px}
+button{border:0;border-radius:14px;padding:14px 20px;font-size:17px;font-weight:bold}
+.big{min-width:190px;font-size:22px;background:#fff;color:#111}
+.gray{background:#303846;color:#fff}.red{background:#c83d3d;color:#fff}
+#select{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+#select h2{margin:8px 0 4px;font-size:30px}.hint{opacity:.7;margin-bottom:12px}
+#grid{width:min(900px,100%);display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.card{background:#1a2029;color:#fff;border:2px solid transparent;text-align:left;padding:10px;border-radius:14px;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.card.sel{border-color:#fff;background:#293241}.emo{font-size:30px}.nm{font-weight:bold}.st{font-size:10px;opacity:.7;margin-top:3px}
+.bottom{width:min(900px,100%);display:flex;gap:8px;padding:14px 0 4px;position:sticky;bottom:0;background:linear-gradient(transparent,#0d1117 25%)}
+.bottom button{flex:1}
+#arena{background:#111820}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.skillText{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.7);
+font-size:clamp(25px,7vw,52px);font-weight:1000;text-align:center;opacity:0;pointer-events:none;
+text-shadow:0 3px 12px #000;transition:opacity .12s,transform .35s;z-index:3;white-space:nowrap}
+.skillText.show{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
+#top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;pointer-events:none}
+.badge{background:#000b;border-radius:12px;padding:8px 12px;font-weight:bold}
+#pauseBtn{position:absolute;right:10px;top:54px;background:#000b;color:#fff}
+.cover{position:absolute;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{width:min(390px,100%);background:#1a2029;border-radius:22px;padding:25px;text-align:center}
+.box h2{margin:0 0 8px;font-size:30px}.box p{opacity:.7}
+.box button{margin:4px}
+</style>
+</head>
+<body>
+
+<section id="home" class="screen">
+<h1>MONSTER<br>BATTLE ROYALE</h1>
+<div class="hint">Chạm PLAY để bắt đầu</div>
+<button id="play" class="big">PLAY</button>
+</section>
+
+<section id="select" class="screen hide">
+<h2>CHỌN QUÁI VẬT</h2>
+<div id="counter" class="hint">Đã chọn 0 / 10</div>
+<div id="grid"></div>
+<div class="bottom">
+<button id="back" class="gray">LOBBY</button>
+<button id="start" class="big">BATTLE</button>
+</div>
+</section>
+
+<section id="arena" class="screen hide">
+<canvas id="canvas"></canvas><div id="skillText" class="skillText"></div>
+<div id="top"><div id="alive" class="badge">Alive: 0</div><div id="koc" class="badge">KOs: 0</div></div>
+<button id="pauseBtn">Ⅱ</button>
+<button id="musicBtn" style="position:absolute;right:10px;top:102px;background:#000b;color:#fff">🔊 NHẠC</button>
+<audio id="bgMusic" loop preload="auto"></audio>
+
+<div id="pauseBox" class="cover hide"><div class="box">
+<h2>PAUSED</h2>
+<button id="resume" class="big">RESUME</button><br>
+<button id="quit" class="red">EXIT BATTLE</button>
+</div></div>
+
+<div id="confirmBox" class="cover hide"><div class="box">
+<h2>THOÁT TRẬN?</h2><p>Trận đấu hiện tại sẽ bị mất.</p>
+<button id="yesQuit" class="red">YES</button>
+<button id="noQuit" class="gray">NO</button>
+</div></div>
+
+<div id="winBox" class="cover hide"><div class="box">
+<h2 id="winName">WINNER!</h2><p id="winInfo"></p>
+<button id="again" class="big">PLAY AGAIN</button>
+<button id="winBack" class="gray">BACK TO LOBBY</button>
+</div></div>
+</section>
+
+<script>
+(function(){
+"use strict";
+
+var MONSTERS=[
+["Ember Wolf","🐺",115,18,1.65,.9],["Frost Golem","🗿",190,14,1.05,1.2],
+["Storm Lynx","🐆",105,15,2.15,.7],["Moss Troll","👹",230,22,.85,1.5],
+["Void Bat","🦇",90,20,1.9,.65],["Iron Beetle","🪲",175,12,1.1,1.8],
+["Moon Fox","🦊",110,16,1.8,.8],["Flame Imp","😈",80,24,2.25,.5],
+["Crystal Drake","🐉",155,21,1.25,1.1],["Sand Wyrm","🐍",145,19,1.35,1],
+["Thunder Ram","🐏",160,25,1.15,1.25],["Abyss Slime","🟣",210,11,.9,1.7],
+["Shadow Crow","🐦",95,17,2,.7],["Sun Lion","🦁",150,23,1.45,1],
+["Bone Knight","💀",180,19,1,1.45],["Toxic Frog","🐸",125,20,1.5,1],
+["Leaf Spirit","🌿",100,13,1.7,.75],["Lava Beast","🌋",205,26,.8,1.7],
+["Star Moth","🦋",85,14,2.35,.55],["Dark Minotaur","🐂",220,28,.9,1.8],["Naruto Kid","🍥",220,16,1.7,1.0],["Luffy Kid","🏴‍☠️",240,17,1.65,0.9],["Goku","🟠",260,19,1.55,0.95],["Gojo","🕶️",250,20,1.7,1.0]
+];
+
+function $(id){return document.getElementById(id);}
+function show(id){
+  ["home","select","arena"].forEach(function(x){$(x).classList.add("hide");});
+  $(id).classList.remove("hide");
+}
+function tap(el,fn){
+  var moved=false,sx=0,sy=0,justTouched=false;
+  el.addEventListener("touchstart",function(e){
+    justTouched=true;
+    if(e.touches&&e.touches[0]){
+      sx=e.touches[0].clientX;sy=e.touches[0].clientY;moved=false;
+    }
+  },{passive:true});
+  el.addEventListener("touchmove",function(e){
+    if(e.touches&&e.touches[0] &&
+       Math.hypot(e.touches[0].clientX-sx,e.touches[0].clientY-sy)>10)moved=true;
+  },{passive:true});
+  el.addEventListener("touchend",function(e){
+    if(e.cancelable)e.preventDefault();
+    if(!moved)fn();
+    setTimeout(function(){justTouched=false;},450);
+  },{passive:false});
+  el.addEventListener("click",function(e){
+    // Mobile browsers often synthesize a click after touchend.
+    // Ignore that synthetic click so PLAY/START only fire once.
+    if(justTouched)return;
+    fn();
+  });
+}
+
+
+var musicOn=true, audioCtx=null, musicGain=null, musicTimer=null, musicStep=0;
+function startMusic(){
+  if(!musicOn)return;
+  try{
+    if(!audioCtx){
+      audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      musicGain=audioCtx.createGain();
+      musicGain.gain.value=.12;
+      musicGain.connect(audioCtx.destination);
+
+      // Original in-game melody (not the copyrighted recording).
+      var notes=[220,247,262,294,330,294,262,247,220,196,220,247,262,294,330,392,330,294];
+      var bass=[110,123,131,147,165,147,131,123,110,98,110,123,131,147,165,196,165,147];
+
+      musicTimer=setInterval(function(){
+        if(!musicOn||!audioCtx||!musicGain)return;
+        if(audioCtx.state==="suspended") audioCtx.resume();
+
+        var now=audioCtx.currentTime;
+        var n=notes[musicStep%notes.length];
+        var b=bass[musicStep%bass.length];
+        musicStep++;
+
+        function tone(freq,volume,duration,type){
+          var o=audioCtx.createOscillator();
+          var g=audioCtx.createGain();
+          o.type=type||"triangle";
+          o.frequency.setValueAtTime(freq,now);
+          g.gain.setValueAtTime(.0001,now);
+          g.gain.exponentialRampToValueAtTime(volume,now+.025);
+          g.gain.exponentialRampToValueAtTime(.0001,now+duration);
+          o.connect(g); g.connect(musicGain);
+          o.start(now); o.stop(now+duration+.02);
+        }
+
+        tone(n,.20,.34,"triangle");
+        tone(b,.055,.42,"sine");
+      },420);
+    }
+
+    // Always restore volume when turning music back on.
+    musicGain.gain.value=.12;
+    if(audioCtx.state==="suspended") audioCtx.resume();
+  }catch(e){
+    console.log("Music unavailable:",e);
+  }
+}
+function toggleMusic(){
+  musicOn=!musicOn;
+  $("musicBtn").textContent=musicOn?"🔊 NHẠC":"🔇 TẮT NHẠC";
+  if(musicOn){
+    startMusic();
+  }else if(musicGain){
+    musicGain.gain.value=0;
+  }
+}
+
+var selected=[];
+var grid=$("grid");
+MONSTERS.forEach(function(m,i){
+  var b=document.createElement("button");
+  b.className="card";
+  b.innerHTML='<div class="emo">'+m[1]+'</div><div class="nm">'+m[0]+'</div><div class="st">HP '+m[2]+' • DMG '+m[3]+'<br>SPD '+m[4]+' • CD '+m[5]+'s</div>';
+  tap(b,function(){
+    var pos=selected.indexOf(i);
+    if(pos>=0) selected.splice(pos,1);
+    else if(selected.length<10) selected.push(i);
+    b.classList.toggle("sel",selected.indexOf(i)>=0);
+    $("counter").textContent="Đã chọn "+selected.length+" / 10";
+  });
+  grid.appendChild(b);
+});
+
+tap($("play"),function(){show("select");startMusic();});
+
+
+tap($("musicBtn"),function(){toggleMusic();});
+tap($("back"),function(){show("home");});
+tap($("start"),function(){
+  if(selected.length<2){$("counter").textContent="⚠️ Phải chọn ít nhất 2 quái!";return;}
+  startGame();
+});
+
+var canvas=$("canvas"),ctx=canvas.getContext("2d"),fighters=[],running=false,paused=false,kos=0,last=0;
+
+function resize(){
+  var d=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  canvas.width=Math.floor(innerWidth*d);canvas.height=Math.floor(innerHeight*d);
+  canvas.style.width=innerWidth+"px";canvas.style.height=innerHeight+"px";
+  ctx.setTransform(d,0,0,d,0,0);
+}
+addEventListener("resize",resize);resize();
+
+function startGame(){
+  show("arena");$("winBox").classList.add("hide");$("pauseBox").classList.add("hide");
+  fighters=[];kos=0;
+  var W=innerWidth,H=innerHeight;
+  selected.forEach(function(idx,n){
+    var m=MONSTERS[idx],a=n/selected.length*Math.PI*2,r=Math.min(W,H)*.33;
+    fighters.push({name:m[0],icon:m[1],max:m[2],hp:m[2],dmg:m[3],spd:m[4]*55,cd:m[5],
+      timer:Math.random(),skillTimer: m[0]==="Naruto Kid" ? 10 : (m[0]==="Luffy Kid" ? 5 : (m[0]==="Goku" ? 8 : 0)),
+      x:W/2+Math.cos(a)*r,y:H/2+Math.sin(a)*r,
+      vx:0,vy:0,alive:true,kills:0,r:22,flash:0,kind:m[0],owner:null,
+      hitLock:0,skillFlash:0,skillPulse:0,skillBusy:0,skillTarget:null,skillDir:0,skillType:"",gojoCD:m[0]==="Gojo"?10:0,gojoCharge:0,gojoDir:0,gojoFire:0});
+  });
+  running=true;paused=false;last=performance.now();requestAnimationFrame(loop);
+}
+
+function skillTargetFor(f){
+  var t=null,best=Infinity;
+  fighters.forEach(function(e){if(!e.alive||e===f||e.owner===f)return;var d=Math.hypot(e.x-f.x,e.y-f.y);if(d<best){best=d;t=e;}});
+  return t;
+}
+function beginSkill(f){
+  if(!f.alive||f.skillTimer>0||f.skillBusy>0)return;
+  if(f.kind!=="Luffy Kid"&&f.kind!=="Goku")return;
+  var t=skillTargetFor(f);if(!t)return;
+  f.skillTarget=t;f.skillDir=Math.atan2(t.y-f.y,t.x-f.x);
+  f.skillBusy=f.kind==="Goku"?1.4:.48;f.skillTimer=f.kind==="Goku"?8:5;
+  f.skillType=f.kind==="Goku"?"kame":"fist";f.vx=0;f.vy=0;
+}
+function tickSkill(f,dt){
+  if(f.skillTimer>0)f.skillTimer=Math.max(0,f.skillTimer-dt);
+  if(f.skillBusy<=0)return false;
+  f.skillBusy=Math.max(0,f.skillBusy-dt);f.vx=0;f.vy=0;
+  if(f.skillBusy<=0&&f.skillTarget&&f.skillTarget.alive){
+    var t=f.skillTarget,dx=Math.cos(f.skillDir),dy=Math.sin(f.skillDir);
+    if(f.skillType==="fist"){
+      if(Math.hypot(t.x-f.x,t.y-f.y)<220){t.hp-=f.dmg*2;t.flash=.16;t.vx+=dx*480;t.vy+=dy*480;}
+    }else{
+      fighters.forEach(function(e){
+        if(!e.alive||e===f||e.owner===f)return;
+        var ex=e.x-f.x,ey=e.y-f.y,along=ex*dx+ey*dy,side=Math.abs(ex*dy-ey*dx);
+        if(along>15&&along<330&&side<30){e.hp-=f.dmg*1.5;e.flash=.16;e.vx+=dx*360;e.vy+=dy*360;}
+      });
+    }
+    f.skillTarget=null;
+  }
+  return true;
+}
+
+function loop(t){
+  if(!running)return;
+  var dt=Math.min(.03,Math.max(0,(t-last)/1000));last=t;
+  if(!paused)update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+function update(dt){
+  var alive=fighters.filter(function(f){return f.alive;});
+  $("alive").textContent="Alive: "+alive.length;$("koc").textContent="KOs: "+kos;
+
+  alive.forEach(function(f){
+    f.timer=Math.max(0,f.timer-dt);
+    f.skillTimer=Math.max(0,f.skillTimer-dt);
+    f.hitLock=Math.max(0,f.hitLock-dt);
+    f.flash=Math.max(0,f.flash-dt);
+    f.skillFlash=Math.max(0,f.skillFlash-dt);f.skillPulse=Math.max(0,f.skillPulse-dt);
+
+    // Naruto Kid: create two short-lived shadow clones every 10 seconds.
+    if(f.kind==="Naruto Kid" && !f.owner && f.skillTimer<=0){
+      spawnClone(f,-1);
+      spawnClone(f,1);
+      f.skillTimer=10;
+      f.skillFlash=.8;
+      f.skillPulse=.8;
+      showSkillText("🍥 SHADOW CLONE!");
+    }
+
+    // Goku: use the ORIGINAL Kamehameha skill and 8-second cooldown.
+    if(f.kind==="Goku" && !f.owner && f.skillTimer<=0 && f.skillBusy<=0){
+      beginSkill(f);
+      if(f.skillBusy>0){
+        f.skillFlash=.8;
+        f.skillPulse=.8;
+        showSkillText("🟠 KAMEHAMEHA!");
+      }
+    }
+    if(f.kind==="Goku" && f.skillBusy>0) tickSkill(f,dt);
+
+    // Luffy Kid: Gum-Gum Pistol, ranged hit every 5 seconds.
+    if(f.kind==="Luffy Kid" && !f.owner && f.skillTimer<=0){
+      useLuffyPistol(f,alive);
+      f.skillTimer=5;
+      f.skillFlash=.8;
+      f.skillPulse=.8;
+      showSkillText("🏴‍☠️ GUM-GUM PISTOL!");
+    }
+
+    // Gojo: 10s cooldown. When ready, blue + red charge and merge into a
+    // slightly larger purple sphere, then fire it in the stored direction.
+    if(f.kind==="Gojo" && !f.owner){
+      f.gojoCD=Math.max(0,f.gojoCD-dt);
+      if(f.gojoCharge>0){
+        f.gojoCharge=Math.max(0,f.gojoCharge-dt);
+        f.vx=0; f.vy=0;
+        if(f.gojoCharge<=0){
+          fireGojoPurple(f);
+          f.skillFlash=.9;
+          f.skillPulse=.9;
+          showSkillText("🟣 HƯ THỨC TỬ!");
+        }
+      } else if(f.gojoFire>0){
+        f.gojoFire=Math.max(0,f.gojoFire-dt);
+        f.vx=0; f.vy=0;
+      } else if(f.gojoCD<=0){
+        var gt=skillTargetFor(f);
+        if(gt){
+          f.gojoDir=Math.atan2(gt.y-f.y,gt.x-f.x);
+          f.gojoCharge=3.3;
+          f.gojoCD=10;
+          f.vx=0; f.vy=0;
+          showSkillText("🔵 + 🔴  →  🟣");
+        }
+      }
+    }
+    if(f.kind==="Gojo" && !f.owner) tickGojoProjectile(f,dt);
+
+    if(f.hitLock<=0){
+      var target=null,best=Infinity;
+      alive.forEach(function(e){
+        if(e===f || !e.alive || (f.owner && e.owner===f.owner))return;
+        var dx=e.x-f.x,dy=e.y-f.y,d=dx*dx+dy*dy;
+        if(d<best){best=d;target=e;}
+      });
+      if(target){
+        var dx=target.x-f.x,dy=target.y-f.y,d=Math.hypot(dx,dy)||1;
+        var wantX=dx/d*f.spd,wantY=dy/d*f.spd;
+        f.vx+=(wantX-f.vx)*Math.min(1,dt*7);
+        f.vy+=(wantY-f.vy)*Math.min(1,dt*7);
+      }
+    }else{
+      // Friction during the brief knockback lock.
+      f.vx*=Math.pow(.12,dt);
+      f.vy*=Math.pow(.12,dt);
+    }
+
+    f.x+=f.vx*dt;f.y+=f.vy*dt;
+    f.x=Math.max(f.r+12,Math.min(innerWidth-f.r-12,f.x));
+    f.y=Math.max(80+f.r,Math.min(innerHeight-f.r-12,f.y));
+  });
+
+  // Hard physical separation + one hit per contact.
+  // This is intentionally stronger than the old version so characters cannot sit on top of each other.
+  for(var i=0;i<fighters.length;i++)for(var j=i+1;j<fighters.length;j++){
+    var a=fighters[i],b=fighters[j];
+    if(!a.alive||!b.alive)continue;
+    if(a.owner && a.owner===b.owner)continue;
+
+    var dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.001,min=a.r+b.r+2;
+    if(d<min){
+      var nx=dx/d,ny=dy/d,o=min-d;
+
+      // Move them physically apart, even if they have zero velocity.
+      a.x-=nx*o*.55;a.y-=ny*o*.55;
+      b.x+=nx*o*.55;b.y+=ny*o*.55;
+
+      // Always add an outward impulse so they don't get sucked back together.
+      var impulse=220;
+      a.vx-=nx*impulse;a.vy-=ny*impulse;
+      b.vx+=nx*impulse;b.vy+=ny*impulse;
+
+      // Same Naruto team (owner + clones) must NEVER attack each other.
+      var sameNarutoTeam = (a.owner && a.owner===b.owner) ||
+                           (a.owner===b && b.kind==="Naruto Kid") ||
+                           (b.owner===a && a.kind==="Naruto Kid");
+      // Only deal damage if attack cooldown is ready.
+      if(!sameNarutoTeam && a.timer<=0 && a.hitLock<=0)damage(a,b,nx,ny);
+      if(!sameNarutoTeam && b.timer<=0 && b.hitLock<=0 && b.alive)damage(b,a,-nx,-ny);
+    }
+  }
+
+  // Remove expired Naruto clones.
+  fighters.forEach(function(f){
+    if(f.alive && f.owner && f.life!==undefined){
+      f.life-=dt;
+      if(f.life<=0){f.alive=false;}
+    }
+  });
+
+  alive=fighters.filter(function(f){return f.alive;});
+  if(alive.length<=1){
+    running=false;var w=alive[0];
+    $("winName").textContent=w?w.icon+" "+w.name+" WINS!":"DRAW!";
+    $("winInfo").textContent=w?"KOs: "+w.kills+" • HP: "+Math.ceil(w.hp)+" / "+w.max:"Everyone was knocked out.";
+    $("winBox").classList.remove("hide");
+  }
+}
+
+function spawnClone(owner,side){
+  var ang=Math.atan2(owner.vy,owner.vx)||0;
+  var px=owner.x+Math.cos(ang+side*.8)*42;
+  var py=owner.y+Math.sin(ang+side*.8)*42;
+  fighters.push({
+    name:"Shadow Clone",icon:"🍥",max:55,hp:55,dmg:10,spd:owner.spd*1.03,cd:1.2,
+    timer:.2,skillTimer:0,x:px,y:py,vx:0,vy:0,alive:true,kills:0,r:18,flash:0,
+    kind:"Clone",owner:owner,hitLock:.2,skillFlash:.75,skillPulse:.75,life:7
+  });
+}
+
+
+function fireGojoPurple(f){
+  // Create a real purple projectile that travels forward instead of drawing
+  // a beam directly from Gojo.
+  var dx=Math.cos(f.gojoDir),dy=Math.sin(f.gojoDir);
+  f.gojoProjectile={
+    x:f.x+dx*48,y:f.y+dy*48,
+    vx:dx*620,vy:dy*620,
+    life:0.75,r:27
+  };
+  f.gojoFire=0.75;
+  f.skillFlash=.65;
+  f.skillPulse=.65;
+}
+
+function tickGojoProjectile(f,dt){
+  var p=f.gojoProjectile;
+  if(!p)return;
+  p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
+
+  fighters.forEach(function(e){
+    if(!e.alive||e===f||e.owner===f||p.hit)return;
+    if(Math.hypot(e.x-p.x,e.y-p.y)<e.r+p.r){
+      e.hp-=f.dmg*5.2;
+      e.flash=.28;
+      e.vx+=p.vx*.8;e.vy+=p.vy*.8;
+      p.hit=true;
+      if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;}
+    }
+  });
+
+  if(p.hit||p.life<=0||p.x<-80||p.x>innerWidth+80||p.y<-80||p.y>innerHeight+80){
+    f.gojoProjectile=null;
+    f.gojoFire=0;
+  }
+}
+
+
+function useLuffyPistol(user,alive){
+  var target=null,best=Infinity;
+  alive.forEach(function(e){
+    if(e===user || !e.alive || (e.owner && e.owner===user))return;
+    var dx=e.x-user.x,dy=e.y-user.y,d=Math.hypot(dx,dy);
+    if(d<best && d<260){best=d;target=e;}
+  });
+  if(!target)return;
+  var dx=target.x-user.x,dy=target.y-user.y,d=Math.hypot(dx,dy)||1;
+  // Extend the arm visually with a temporary flash and deal one ranged hit.
+  target.vx+=(dx/d)*520;target.vy+=(dy/d)*520;
+  target.hp-=32;target.flash=.18;user.kills += target.hp<=0 ? 1 : 0;
+  if(target.hp<=0){target.hp=0;target.alive=false;kos++;}
+}
+
+function showSkillText(text){
+  var el=$("skillText");
+  el.textContent=text;
+  el.classList.remove("show");
+  void el.offsetWidth;
+  el.classList.add("show");
+  clearTimeout(window._skillTextTimer);
+  window._skillTextTimer=setTimeout(function(){el.classList.remove("show");},650);
+}
+
+function damage(att,vic,nx,ny){
+  vic.hp-=att.dmg;
+  att.timer=att.cd;
+  att.hitLock=.10;
+  vic.flash=.12;
+  vic.hitLock=.22;
+  var kb=Math.max(260,att.dmg*13);
+  vic.vx+=nx*kb;vic.vy+=ny*kb;
+  // Extra immediate positional push prevents overlap on slow devices.
+  vic.x+=nx*5;vic.y+=ny*5;
+  if(vic.hp<=0){vic.hp=0;vic.alive=false;att.kills++;kos++;}
+}
+function draw(){
+  var W=innerWidth,H=innerHeight;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle="#111820";ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle="#33404e";ctx.lineWidth=3;ctx.strokeRect(12,62,W-24,H-74);
+  fighters.forEach(function(f){
+    if(!f.alive)return;
+    ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
+    ctx.fillStyle=f.flash>0?"#fff":"#273344";ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.stroke();
+    ctx.font="27px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+if(f.alive&&f.skillBusy>0){
+  ctx.save();ctx.translate(f.x,f.y);ctx.rotate(f.skillDir||0);
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  if(f.skillType==="fist"){
+    ctx.fillStyle="#f2c6a0";
+      ctx.strokeStyle="#8f5f43";ctx.lineWidth=2;
+      ctx.beginPath();ctx.roundRect(28,-15,34,30,10);ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.arc(60,0,11,0,Math.PI*2);ctx.fill();ctx.stroke();
+      ctx.fillStyle="#e8b58e";
+      ctx.fillRect(34,-10,7,20);ctx.fillRect(43,-10,7,20);ctx.fillRect(52,-9,7,18);
+  }else{
+    ctx.globalAlpha=.9;ctx.font="34px system-ui";ctx.fillText("🔵",34,0);
+    ctx.beginPath();ctx.lineWidth=22;ctx.moveTo(38,0);ctx.lineTo(300,0);ctx.stroke();
+    ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(38,0);ctx.lineTo(300,0);ctx.stroke();
+  }
+  ctx.restore();
+}
+if(f.kind==="Gojo" && !f.owner && (f.gojoCharge>0 || f.gojoFire>0)){
+  ctx.save();
+  ctx.translate(f.x,f.y);
+  ctx.rotate(f.gojoDir||0);
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  var charging=f.gojoCharge>0;
+  var p=charging ? 1-Math.max(0,Math.min(1,(f.gojoCharge/3.3))) : 1;
+  if(charging){
+    // Blue and red spheres visibly converge toward the center.
+    var sep=62*(1-p);
+    ctx.globalAlpha=.35+.65*(1-p);
+    ctx.font="34px system-ui";
+    ctx.fillText("🔵",-sep,0);
+    ctx.fillText("🔴",sep,0);
+    ctx.globalAlpha=.35+.65*p;
+    ctx.beginPath();ctx.arc(0,0,10+18*p,0,Math.PI*2);
+    ctx.fillStyle="#b58cff";ctx.fill();
+    ctx.globalAlpha=1;
+  }else if(f.gojoFire>0 && !f.gojoProjectile){
+    // Short release flash: the orb appears before it starts flying.
+    ctx.shadowBlur=22;ctx.shadowColor="#b56cff";
+    ctx.beginPath();ctx.arc(42,0,27,0,Math.PI*2);
+    ctx.fillStyle="#8d45ff";ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.lineWidth=5;ctx.strokeStyle="#e4c8ff";ctx.stroke();
+  }
+  ctx.restore();
+}
+if(f.kind==="Gojo" && !f.owner && f.gojoProjectile){
+  var p=f.gojoProjectile;
+  var ang=Math.atan2(p.vy,p.vx);
+  ctx.save();
+  ctx.translate(p.x,p.y);
+  ctx.rotate(ang);
+  // The attack is a flying purple BALL, with a short glowing tail.
+  ctx.globalAlpha=.35;
+  ctx.beginPath();ctx.arc(-25,0,16,0,Math.PI*2);
+  ctx.fillStyle="#8d45ff";ctx.fill();
+  ctx.globalAlpha=.7;
+  ctx.beginPath();ctx.ellipse(-38,0,34,11,0,0,Math.PI*2);
+  ctx.fillStyle="#b56cff";ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.shadowBlur=25;ctx.shadowColor="#a85cff";
+  ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);
+  ctx.fillStyle="#8d45ff";ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.lineWidth=5;ctx.strokeStyle="#ead8ff";ctx.stroke();
+  ctx.beginPath();ctx.arc(-7,-7,9,0,Math.PI*2);
+  ctx.fillStyle="#d9b8ff";ctx.globalAlpha=.8;ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+ctx.fillText(f.icon,f.x,f.y);
+    ctx.fillStyle="#000";ctx.fillRect(f.x-28,f.y-40,56,7);
+    ctx.fillStyle="#55df68";ctx.fillRect(f.x-28,f.y-40,56*(f.hp/f.max),7);
+    ctx.font="10px Arial";ctx.fillStyle="#fff";ctx.fillText(f.name,f.x,f.y+39);
+    if(f.kills)ctx.fillText("☠ "+f.kills,f.x,f.y+51);
+    if(f.kind==="Naruto Kid" && !f.owner){
+      ctx.fillStyle="#fff";ctx.fillText("Clone: "+Math.ceil(f.skillTimer)+"s",f.x,f.y+63);
+    }
+    if(f.kind==="Luffy Kid" && !f.owner){
+      ctx.fillStyle="#fff";ctx.fillText("Pistol: "+Math.ceil(f.skillTimer)+"s",f.x,f.y+63);
+    }
+    if(f.kind==="Goku" && !f.owner){
+      ctx.fillStyle="#fff";
+      ctx.fillText("Kamehameha: "+Math.ceil(f.skillTimer)+"s",f.x,f.y+63);
+    }
+    if(f.kind==="Gojo" && !f.owner){
+      ctx.fillStyle="#fff";
+      if(f.gojoCharge>0) ctx.fillText("Hư Thức Tử: TỤ "+f.gojoCharge.toFixed(1)+"s",f.x,f.y+63);
+      else if(f.gojoFire>0 || f.gojoProjectile) ctx.fillText("Hư Thức Tử: 🟣 BAY!",f.x,f.y+63);
+      else ctx.fillText("Hư Thức Tử CD: "+Math.ceil(f.gojoCD)+"s",f.x,f.y+63);
+    }
+    if(f.skillFlash>0){
+      var pulse=1+(0.55-f.skillFlash)*2.2;
+      ctx.beginPath();ctx.arc(f.x,f.y,f.r+10+pulse*18,0,Math.PI*2);
+      ctx.strokeStyle="#fff";ctx.lineWidth=5;ctx.globalAlpha=Math.min(1,f.skillFlash*1.5);ctx.stroke();
+      ctx.globalAlpha=1;
+    }
+    if(f.kind==="Luffy Kid" && f.skillFlash>0){
+      ctx.save();
+      ctx.translate(f.x,f.y);
+      ctx.rotate(f.skillDir||0);
+      var skin="#f2c6a0", skinDark="#8f5f43", skinLight="#e8b58e";
+      ctx.lineCap="round";ctx.lineJoin="round";
+
+      // Long rubber arm.
+      ctx.strokeStyle=skin;ctx.lineWidth=22;
+      ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(86,0);ctx.stroke();
+      ctx.strokeStyle=skinDark;ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(86,0);ctx.stroke();
+
+      // Skin-colored fist.
+      ctx.fillStyle=skin;ctx.strokeStyle=skinDark;ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.roundRect(78,-16,38,32,10);
+      ctx.fill();ctx.stroke();
+
+      // Knuckles/fingers.
+      ctx.fillStyle=skinLight;
+      ctx.fillRect(84,-11,7,22);
+      ctx.fillRect(93,-11,7,22);
+      ctx.fillRect(102,-10,7,20);
+
+      // Thumb.
+      ctx.fillStyle=skin;
+      ctx.beginPath();ctx.arc(113,5,9,0,Math.PI*2);ctx.fill();ctx.stroke();
+
+      ctx.restore();
+    }
+  });
+}
+
+tap($("pauseBtn"),function(){if(running){paused=true;$("pauseBox").classList.remove("hide");}});
+tap($("resume"),function(){paused=false;$("pauseBox").classList.add("hide");});
+tap($("quit"),function(){$("pauseBox").classList.add("hide");$("confirmBox").classList.remove("hide");});
+tap($("noQuit"),function(){$("confirmBox").classList.add("hide");$("pauseBox").classList.remove("hide");});
+tap($("yesQuit"),function(){running=false;paused=false;$("confirmBox").classList.add("hide");show("select");});
+tap($("again"),function(){startGame();});
+tap($("winBack"),function(){running=false;show("home");});
+
+})();
+</script>
+</body>
+</html>
