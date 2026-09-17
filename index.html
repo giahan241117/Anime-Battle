@@ -1,0 +1,1651 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Monster Battle Royale</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0d1117;color:#fff;font-family:Arial,sans-serif}
+*{box-sizing:border-box}button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px}
+.hide{display:none!important}
+h1{text-align:center;font-size:clamp(34px,10vw,64px);line-height:.95;margin:0 0 12px}
+button{border:0;border-radius:14px;padding:14px 20px;font-size:17px;font-weight:bold}button:disabled{opacity:.48}
+.big{min-width:190px;font-size:22px;background:#fff;color:#111}
+.gray{background:#303846;color:#fff}.red{background:#c83d3d;color:#fff}
+#select{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+#select h2{margin:8px 0 4px;font-size:30px}.hint{opacity:.7;margin-bottom:12px}
+#grid{width:min(900px,100%);display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.card{background:#1a2029;color:#fff;border:2px solid transparent;text-align:left;padding:10px;border-radius:14px;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.card.sel{border-color:#fff;background:#293241}.emo{font-size:30px}.todorokiHead{width:38px;height:38px;border-radius:50%;background:#f2c6a0;position:relative;overflow:hidden;box-shadow:inset 0 -2px 0 #d79b78}.todorokiHead:before{content:"";position:absolute;left:0;top:0;width:100%;height:20px;background:linear-gradient(90deg,#d83b3b 0 50%,#4da9ff 50% 100%);border-radius:50% 50% 35% 35%}.todorokiHead:after{content:"";position:absolute;left:7px;right:7px;top:21px;height:4px;background:#222;border-radius:50%}.nm{font-weight:bold}.st{font-size:10px;opacity:.7;margin-top:3px}
+.bottom{width:min(900px,100%);display:flex;gap:8px;padding:14px 0 4px;position:sticky;bottom:0;background:linear-gradient(transparent,#0d1117 25%)}
+.bottom button{flex:1}
+#arena{background:#111820}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;transform:scale(.9);transform-origin:center center}
+.skillText{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.7);
+font-size:clamp(25px,7vw,52px);font-weight:1000;text-align:center;opacity:0;pointer-events:none;
+text-shadow:0 3px 12px #000;transition:opacity .12s,transform .35s;z-index:3;white-space:nowrap}
+.skillText.show{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
+#top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;pointer-events:none}
+.badge{background:#000b;border-radius:12px;padding:8px 12px;font-weight:bold}
+#pauseBtn{position:absolute;right:10px;top:54px;background:#000b;color:#fff}
+.cover{position:absolute;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{width:min(390px,100%);background:#1a2029;border-radius:22px;padding:25px;text-align:center}
+.box h2{margin:0 0 8px;font-size:30px}.box p{opacity:.7}
+.box button{margin:4px}
+
+#fpsCounter{position:fixed;left:10px;top:10px;z-index:9999;padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.55);color:#fff;font:700 13px Arial,sans-serif;pointer-events:none;}
+</style>
+</head>
+<body>
+<div id="fpsCounter">FPS: --</div>
+
+<section id="home" class="screen">
+<h1>MONSTER<br>BATTLE ROYALE</h1>
+<div class="hint">Chạm PLAY để bắt đầu</div>
+<div id="upgradeWrapHome" style="width:min(900px,100%);margin:0 0 12px;text-align:center">
+  <button id="upgradeMenuHome" class="gray" style="width:100%;font-size:20px">🆙 NÂNG CẤP NHÂN VẬT</button>
+  <div id="upgradePanelHome" style="display:none;margin-top:10px;background:#1a2029;border:2px solid #384455;border-radius:18px;padding:12px">
+    <div style="font-size:24px;font-weight:900;margin-bottom:10px">🆙 NÂNG CẤP NHÂN VẬT</div>
+    <div style="background:#202733;border-radius:14px;padding:10px;margin-bottom:8px">
+      <div style="font-size:20px;font-weight:900">🐯 MIGHT GUY</div>
+      <div id="guyUpgradeInfoHome" style="margin:5px 0 8px;opacity:.9"></div>
+      <button id="upgradeGuyHome" class="big" style="width:100%;font-size:17px">NÂNG CẤP GUY</button>
+    </div>
+    <div style="background:#202733;border-radius:14px;padding:10px">
+      <div style="font-size:20px;font-weight:900">☁️ PAIN</div>
+      <div id="painUpgradeInfoHome" style="margin:5px 0 8px;opacity:.9"></div>
+      <button id="upgradePainHome" class="big" style="width:100%;font-size:17px">NÂNG CẤP PAIN</button>
+    </div>
+    <div style="background:#202733;border-radius:14px;padding:10px;margin-top:8px">
+      <div style="font-size:20px;font-weight:900">🔴🔵 TODOROKI SHOTO</div>
+      <div id="todorokiUpgradeInfoHome" style="margin:5px 0 8px;opacity:.9"></div>
+      <button id="upgradeTodorokiHome" class="big" style="width:100%;font-size:17px">NÂNG CẤP TODOROKI</button>
+    </div>
+  </div>
+</div>
+<button id="play" class="big">PLAY</button>
+</section>
+
+<section id="select" class="screen hide">
+<h2>CHỌN QUÁI VẬT</h2>
+<div id="counter" class="hint">Đã chọn 0 / 10</div>
+<div id="grid"></div>
+<div class="bottom">
+<button id="back" class="gray">LOBBY</button>
+<button id="start" class="big">BATTLE</button>
+</div>
+</section>
+
+<section id="arena" class="screen hide">
+<canvas id="canvas"></canvas><div id="skillText" class="skillText"></div>
+<div id="top"><div id="alive" class="badge">Alive: 0</div><div id="koc" class="badge">KOs: 0</div></div>
+<button id="pauseBtn">Ⅱ</button>
+<button id="musicBtn" style="position:absolute;right:10px;top:102px;background:#000b;color:#fff">🔊 NHẠC</button>
+<audio id="bgMusic" loop preload="auto"></audio>
+
+<div id="pauseBox" class="cover hide"><div class="box">
+<h2>PAUSED</h2>
+<button id="resume" class="big">RESUME</button><br>
+<button id="quit" class="red">EXIT BATTLE</button>
+</div></div>
+
+<div id="confirmBox" class="cover hide"><div class="box">
+<h2>THOÁT TRẬN?</h2><p>Trận đấu hiện tại sẽ bị mất.</p>
+<button id="yesQuit" class="red">YES</button>
+<button id="noQuit" class="gray">NO</button>
+</div></div>
+
+<div id="winBox" class="cover hide"><div class="box">
+<h2 id="winName">WINNER!</h2><p id="winInfo"></p>
+<button id="again" class="big">PLAY AGAIN</button>
+<button id="winBack" class="gray">BACK TO LOBBY</button>
+</div></div>
+</section>
+
+<script>
+(function(){
+"use strict";
+
+var MONSTERS=[
+["Naruto Kid","🍥",1000,16,1.7,1.0],
+["Luffy Kid","🏴‍☠️",1000,17,1.65,0.9],
+["Goku","🟠",1000,19,1.55,0.95],
+["Gojo","🕶️",1000,20,1.7,1.0],
+["Zenitsu","⚡",1000,18,1.8,1.0],
+["Might Guy","🐯",1000,20,1.75,1.0],
+["Momo Ayase","🩷",1000,22,1.7,1.0],
+["Pain","👁️👁️",1000,23,1.65,1.0],
+["Kusakabe Atsuya","⚔️",1000,21,1.7,1.0],
+["Todoroki Shoto","👤",1000,21,1.7,1.0]
+];
+
+function $(id){return document.getElementById(id);}
+function show(id){
+  ["home","select","arena"].forEach(function(x){$(x).classList.add("hide");});
+  $(id).classList.remove("hide");
+}
+function tap(el,fn){
+  var moved=false,sx=0,sy=0,justTouched=false;
+  el.addEventListener("touchstart",function(e){
+    justTouched=true;
+    if(e.touches&&e.touches[0]){
+      sx=e.touches[0].clientX;sy=e.touches[0].clientY;moved=false;
+    }
+  },{passive:true});
+  el.addEventListener("touchmove",function(e){
+    if(e.touches&&e.touches[0] &&
+       Math.hypot(e.touches[0].clientX-sx,e.touches[0].clientY-sy)>10)moved=true;
+  },{passive:true});
+  el.addEventListener("touchend",function(e){
+    if(e.cancelable)e.preventDefault();
+    if(!moved)fn();
+    setTimeout(function(){justTouched=false;},450);
+  },{passive:false});
+  el.addEventListener("click",function(e){
+    // Mobile browsers often synthesize a click after touchend.
+    // Ignore that synthetic click so PLAY/START only fire once.
+    if(justTouched)return;
+    fn();
+  });
+}
+
+
+var musicOn=true, audioCtx=null, musicGain=null, musicTimer=null, musicStep=0;
+function startMusic(){
+  if(!musicOn)return;
+  try{
+    if(!audioCtx){
+      audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      musicGain=audioCtx.createGain();
+      musicGain.gain.value=.12;
+      musicGain.connect(audioCtx.destination);
+
+      // Original in-game melody (not the copyrighted recording).
+      var notes=[220,247,262,294,330,294,262,247,220,196,220,247,262,294,330,392,330,294];
+      var bass=[110,123,131,147,165,147,131,123,110,98,110,123,131,147,165,196,165,147];
+
+      musicTimer=setInterval(function(){
+        if(!musicOn||!audioCtx||!musicGain)return;
+        if(audioCtx.state==="suspended") audioCtx.resume();
+
+        var now=audioCtx.currentTime;
+        var n=notes[musicStep%notes.length];
+        var b=bass[musicStep%bass.length];
+        musicStep++;
+
+        function tone(freq,volume,duration,type){
+          var o=audioCtx.createOscillator();
+          var g=audioCtx.createGain();
+          o.type=type||"triangle";
+          o.frequency.setValueAtTime(freq,now);
+          g.gain.setValueAtTime(.0001,now);
+          g.gain.exponentialRampToValueAtTime(volume,now+.025);
+          g.gain.exponentialRampToValueAtTime(.0001,now+duration);
+          o.connect(g); g.connect(musicGain);
+          o.start(now); o.stop(now+duration+.02);
+        }
+
+        tone(n,.20,.34,"triangle");
+        tone(b,.055,.42,"sine");
+      },420);
+    }
+
+    // Always restore volume when turning music back on.
+    musicGain.gain.value=.12;
+    if(audioCtx.state==="suspended") audioCtx.resume();
+  }catch(e){
+    console.log("Music unavailable:",e);
+  }
+}
+function toggleMusic(){
+  musicOn=!musicOn;
+  $("musicBtn").textContent=musicOn?"🔊 NHẠC":"🔇 TẮT NHẠC";
+  if(musicOn){
+    startMusic();
+  }else if(musicGain){
+    musicGain.gain.value=0;
+  }
+}
+
+var selected=[];
+var guyLevel=0;
+var guyKills=0;
+var guyTigerDamage=50;
+var painLevel=0;
+var painKills=0;
+var painBlackHoleDamage=50;
+var todorokiLevel=0;
+var todorokiKills=0;
+var grid=$("grid");
+
+var SAVE_KEY="monster_battle_royale_save_v1";
+function saveGame(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({guyLevel:guyLevel,guyKills:guyKills,guyTigerDamage:guyTigerDamage,painLevel:painLevel,painKills:painKills,painBlackHoleDamage:painBlackHoleDamage,todorokiLevel:todorokiLevel,todorokiKills:todorokiKills}));}catch(e){}}
+function loadGame(){try{var raw=localStorage.getItem(SAVE_KEY);if(!raw)return;var d=JSON.parse(raw);selected=[];if(Number.isFinite(d.guyLevel))guyLevel=Math.max(0,Math.min(8,d.guyLevel));if(Number.isFinite(d.guyKills))guyKills=Math.max(0,d.guyKills);if(Number.isFinite(d.guyTigerDamage))guyTigerDamage=Math.max(50,d.guyTigerDamage);if(Number.isFinite(d.painLevel))painLevel=Math.max(0,Math.min(5,d.painLevel));if(Number.isFinite(d.painKills))painKills=Math.max(0,d.painKills);if(Number.isFinite(d.painBlackHoleDamage))painBlackHoleDamage=Math.max(50,d.painBlackHoleDamage);if(Number.isFinite(d.todorokiLevel))todorokiLevel=Math.max(0,Math.min(10,d.todorokiLevel));if(Number.isFinite(d.todorokiKills))todorokiKills=Math.max(0,d.todorokiKills);}catch(e){}}
+loadGame();
+function guyNextRequirement(){ return guyLevel>=8 ? 0 : 5*(guyLevel+1); }
+function updateGuyUpgrade(){
+  var req=guyNextRequirement();
+  var info=$("guyUpgradeInfoHome"), btn=$("upgradeGuyHome");
+  if(guyLevel>=8){
+    info.textContent="Trú Hổ: "+guyTigerDamage+" dame • Cấp 8/8 • Đã tối đa • Tổng kill: "+guyKills;
+    btn.textContent="ĐÃ ĐẠT CẤP TỐI ĐA";
+    btn.disabled=true;
+  }else{
+    info.textContent="Trú Hổ: "+guyTigerDamage+" dame • Cấp "+guyLevel+"/8 • Kill: "+guyKills+" / "+req;
+    btn.textContent="NÂNG CẤP CẤP "+(guyLevel+1)+" • CẦN "+req+" KILL";
+    btn.disabled=guyKills<req;
+  }
+}
+MONSTERS.forEach(function(m,i){
+  var b=document.createElement("button");
+  b.className="card";
+  b.innerHTML='<div class="emo">'+(m[0]==="Todoroki Shoto"?'<div class="todorokiHead"></div>':m[1])+'</div><div class="nm">'+m[0]+'</div><div class="st">HP '+m[2]+' • DMG '+m[3]+'<br>SPD '+m[4]+' • CD '+m[5]+'s</div>';
+  tap(b,function(){
+    var pos=selected.indexOf(i);
+    if(pos>=0) selected.splice(pos,1);
+    else if(selected.length<10) selected.push(i);
+    b.classList.toggle("sel",selected.indexOf(i)>=0);
+    $("counter").textContent="Đã chọn "+selected.length+" / 10";
+    saveGame();
+  });
+  grid.appendChild(b);
+});
+updateGuyUpgrade();
+function painNextRequirement(){ return painLevel>=5 ? 0 : 5*(painLevel+1); }
+function todorokiNextRequirement(){ return todorokiLevel>=10 ? 0 : 5*(todorokiLevel+1); }
+function updateTodorokiUpgrade(){
+  var info=$("todorokiUpgradeInfoHome"),btn=$("upgradeTodorokiHome"); if(!info||!btn)return;
+  var req=todorokiNextRequirement();
+  if(todorokiLevel>=10){info.textContent="Bạo Hỏa Quyền + Đại Băng Hải Tảo • Cấp 10/10 • Đã tối đa • Tổng kill: "+todorokiKills;btn.textContent="ĐÃ ĐẠT CẤP TỐI ĐA";btn.disabled=true;}
+  else{info.textContent="Băng/Hỏa • Cấp "+todorokiLevel+"/10 • Kill: "+todorokiKills+" / "+req;btn.textContent="NÂNG CẤP CẤP "+(todorokiLevel+1)+" • CẦN "+req+" KILL";btn.disabled=todorokiKills<req;}
+}
+function updatePainUpgrade(){
+  var req=painNextRequirement(), info=$("painUpgradeInfoHome"), btn=$("upgradePainHome");
+  if(!info||!btn)return;
+  if(painLevel>=5){
+    info.textContent="Vạn Tượng Thiên Dẫn: "+painBlackHoleDamage+" dame nổ • Cấp 5/5 • Đã tối đa • Tổng kill: "+painKills;
+    btn.textContent="ĐÃ ĐẠT CẤP TỐI ĐA"; btn.disabled=true;
+  }else{
+    info.textContent="Vạn Tượng Thiên Dẫn: "+painBlackHoleDamage+" dame nổ • Cấp "+painLevel+"/5 • Kill: "+painKills+" / "+req;
+    btn.textContent="NÂNG CẤP CẤP "+(painLevel+1)+" • CẦN "+req+" KILL";
+    btn.disabled=painKills<req;
+  }
+}
+updatePainUpgrade();
+updateTodorokiUpgrade();
+tap($("upgradeMenuHome"),function(){
+  var panel=$("upgradePanelHome");
+  panel.style.display=panel.style.display==="none"?"block":"none";
+  updateGuyUpgrade();
+  updatePainUpgrade();
+  updateTodorokiUpgrade();
+});
+tap($("upgradePainHome"),function(){
+  var req=painNextRequirement();
+  if(painLevel<5 && painKills>=req){ painLevel++; painBlackHoleDamage+=10; updatePainUpgrade(); saveGame(); }
+});
+tap($("upgradeGuyHome"),function(){
+  var req=guyNextRequirement();
+  if(guyLevel<8 && guyKills>=req){
+    guyLevel++;
+    guyTigerDamage+=10;
+    updateGuyUpgrade();
+    saveGame();
+  }
+});
+tap($("upgradeTodorokiHome"),function(){
+  var req=todorokiNextRequirement();
+  if(todorokiLevel<10 && todorokiKills>=req){ todorokiLevel++; saveGame(); updateTodorokiUpgrade(); }
+});
+
+tap($("play"),function(){show("select");startMusic();});
+
+
+tap($("musicBtn"),function(){toggleMusic();});
+tap($("back"),function(){show("home");});
+tap($("start"),function(){
+  if(selected.length<2){$("counter").textContent="⚠️ Phải chọn ít nhất 2 quái!";return;}
+  startGame();
+});
+
+var canvas=$("canvas"),ctx=canvas.getContext("2d"),fighters=[],running=false,paused=false,kos=0,last=0;
+
+function resize(){
+  var d=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  canvas.width=Math.floor(innerWidth*d);canvas.height=Math.floor(innerHeight*d);
+  canvas.style.width=innerWidth+"px";canvas.style.height=innerHeight+"px";
+  ctx.setTransform(d,0,0,d,0,0);
+}
+addEventListener("resize",resize);resize();
+
+function startGame(){
+  show("arena");$("winBox").classList.add("hide");$("pauseBox").classList.add("hide");
+  fighters=[];kos=0;
+  var W=innerWidth,H=innerHeight;
+  selected.forEach(function(idx,n){
+    var m=MONSTERS[idx],a=n/selected.length*Math.PI*2,r=Math.min(W,H)*.33;
+    fighters.push({name:m[0],icon:m[1],max:m[2],hp:m[2],dmg:m[3],spd:m[4]*55,cd:m[5],
+      timer:Math.random(),skillTimer: m[0]==="Naruto Kid" ? 10 : (m[0]==="Luffy Kid" ? 5 : (m[0]==="Goku" ? 8 : (m[0]==="Might Guy" ? 2 : 0))),
+      x:W/2+Math.cos(a)*r,y:H/2+Math.sin(a)*r,
+      vx:0,vy:0,alive:true,kills:0,r:22,flash:0,kind:m[0],owner:null,
+      hitLock:0,skillFlash:0,skillPulse:0,skillBusy:0,skillTarget:null,skillDir:0,skillType:"",kameHitTimer:0,
+      gojoCD:m[0]==="Gojo"?10:0,gojoCharge:0,gojoDir:0,gojoFire:0,
+      zenitsuCD:m[0]==="Zenitsu"?8:0,zenitsuCharge:0,zenitsuDir:0,zenitsuDash:0,zenitsuHit:false,zenitsuTrail:[],guyCD:m[0]==="Might Guy"?5:0,guyTiger:null,guyDrainTimer:0,guyLevelForBattle:m[0]==="Might Guy"?guyLevel:0,
+      momoCD:m[0]==="Momo Ayase"?6:0,momoHand:null,
+      painCD:m[0]==="Pain"?7:0,painBlackHole:null,painUltimateCharge:0,painUltimateUsed:false,painLevelForBattle:m[0]==="Pain"?painLevel:0,
+      kusaCD:m[0]==="Kusakabe Atsuya"?0:0,kusaDomain:null,
+      todorokiCD:m[0]==="Todoroki Shoto"?8:0,todorokiMode:0,todorokiIce:null,todorokiFire:null,
+      todorokiFireCount:0,todorokiIceCount:0,todorokiRedReady:false,todorokiBlueReady:false,todorokiRedSkill:null,todorokiBlueSkill:null,todorokiRedSkillUsed:false,todorokiBlueSkillUsed:false,todorokiUltimateCharge:0,todorokiFireCharge:0,todorokiUltimateUsed:false,todorokiLevelForBattle:m[0]==="Todoroki Shoto"?todorokiLevel:0,stunTimer:0,stunFx:0,freezeTimer:0});
+  });
+  running=true;paused=false;last=performance.now();requestAnimationFrame(loop);
+}
+
+function isSameNarutoTeam(a,b){
+  if(!a||!b)return false;
+  return (a.kind==="Naruto Kid" && b.owner===a) ||
+         (b.kind==="Naruto Kid" && a.owner===b) ||
+         (a.owner && a.owner===b.owner);
+}
+function canTarget(attacker,target){
+  if(!target||!target.alive||target===attacker)return false;
+  if(isSameNarutoTeam(attacker,target))return false;
+  return true;
+}
+function skillTargetFor(f){
+  if(!f || (f.freezeTimer||0)>0 || (f.stunTimer||0)>0)return null;
+  var t=null,best=Infinity;
+  fighters.forEach(function(e){
+    if(!canTarget(f,e))return;
+    var d=Math.hypot(e.x-f.x,e.y-f.y);
+    if(d<best){best=d;t=e;}
+  });
+  return t;
+}
+function beginSkill(f){
+  if(!f.alive||f.skillTimer>0||f.skillBusy>0)return;
+  if(f.kind!=="Luffy Kid"&&f.kind!=="Goku")return;
+  var t=skillTargetFor(f);if(!t)return;
+  f.skillTarget=t;f.skillDir=Math.atan2(t.y-f.y,t.x-f.x);
+  f.skillBusy=f.kind==="Goku"?1.4:.48;f.skillTimer=f.kind==="Goku"?8:5;
+  f.skillType=f.kind==="Goku"?"kame":"fist";f.kameHitTimer=0;f.vx=0;f.vy=0;
+}
+function tickSkill(f,dt){
+  if(f.skillTimer>0)f.skillTimer=Math.max(0,f.skillTimer-dt);
+  if(f.skillBusy<=0)return false;
+  f.skillBusy=Math.max(0,f.skillBusy-dt);f.vx=0;f.vy=0;
+  if(f.skillBusy<=0&&f.skillTarget&&f.skillTarget.alive){
+    var t=f.skillTarget,dx=Math.cos(f.skillDir),dy=Math.sin(f.skillDir);
+    if(f.skillType==="fist"){
+      if(Math.hypot(t.x-f.x,t.y-f.y)<220 && canDamage(t)){t.hp-=f.dmg*2;t.flash=.16;t.vx+=dx*480;t.vy+=dy*480;}
+    }else{
+      fighters.forEach(function(e){
+        if(!e.alive||e===f||e.owner===f)return;
+        var ex=e.x-f.x,ey=e.y-f.y,along=ex*dx+ey*dy,side=Math.abs(ex*dy-ey*dx);
+        if(along>15&&along<330&&side<30 && canDamage(e)){e.hp-=f.dmg*1.5;e.flash=.16;e.vx+=dx*360;e.vy+=dy*360;}
+      });
+    }
+    f.skillTarget=null;
+  }
+  return true;
+}
+
+function loop(t){
+  if(!running)return;
+  var dt=Math.min(.03,Math.max(0,(t-last)/1000));last=t;
+  if(!paused)update(dt);
+  draw();
+  fpsFrames++;
+  if(t-fpsStamp>=500){
+    var fps=Math.round(fpsFrames*1000/(t-fpsStamp));
+    fpsEl.textContent="FPS: "+fps;
+    fpsFrames=0;fpsStamp=t;
+  }
+  requestAnimationFrame(loop);
+}
+function update(dt){
+  var alive=fighters.filter(function(f){return f.alive;});
+  $("alive").textContent="Alive: "+alive.length;$("koc").textContent="KOs: "+kos;
+
+  alive.forEach(function(f){
+    f.timer=Math.max(0,f.timer-dt);
+    f.skillTimer=Math.max(0,f.skillTimer-dt);
+    f.hitLock=Math.max(0,f.hitLock-dt);
+    f.flash=Math.max(0,f.flash-dt);
+    f.skillFlash=Math.max(0,f.skillFlash-dt);f.skillPulse=Math.max(0,f.skillPulse-dt);
+    f.stunTimer=Math.max(0,(f.stunTimer||0)-dt);
+    f.stunFx=Math.max(0,(f.stunFx||0)-dt);
+    f.freezeTimer=Math.max(0,(f.freezeTimer||0)-dt);
+    if(f.stunTimer>0 || f.freezeTimer>0){f.vx=0;f.vy=0;}
+    if(f.kind==="Might Guy" && !f.owner){
+      // Chỉ Lv8 mới có hiệu ứng mất máu khi HP xuống dưới 30%.
+      // Lv0-Lv7 tuyệt đối không bị trừ máu bởi cơ chế khí.
+      if((f.guyLevelForBattle||0)>=8 && f.hp/f.max<.30){
+        f.guyDrainTimer=Math.max(0,f.guyDrainTimer-dt);
+        if(f.guyDrainTimer<=0){
+          f.hp-=5;
+          f.guyDrainTimer=.20;
+          f.flash=.05;
+          if(f.hp<=0){f.hp=0;f.alive=false;}
+        }
+      }else{
+        f.guyDrainTimer=0;
+      }
+    }
+    if(f.kind==="Zenitsu" && f.zenitsuTrail){
+      f.zenitsuTrail.forEach(function(tr){tr.life-=dt;});
+      f.zenitsuTrail=f.zenitsuTrail.filter(function(tr){return tr.life>0;});
+    }
+
+    // Naruto Kid: create two short-lived shadow clones every 10 seconds.
+    if(f.kind==="Naruto Kid" && !f.owner && f.skillTimer<=0){
+      spawnClone(f,-1);
+      spawnClone(f,1);
+      f.skillTimer=10;
+      f.skillFlash=.8;
+      f.skillPulse=.8;
+      showSkillText("🍥 SHADOW CLONE!");
+    }
+
+    // Goku: use the ORIGINAL Kamehameha skill and 8-second cooldown.
+    if(f.kind==="Goku" && !f.owner && f.skillTimer<=0 && f.skillBusy<=0){
+      beginSkill(f);
+      if(f.skillBusy>0){
+        f.skillFlash=.8;
+        f.skillPulse=.8;
+        showSkillText("🟠 KAMEHAMEHA!");
+      }
+    }
+    if(f.kind==="Goku" && f.skillBusy>0){
+      tickSkill(f,dt);
+      // Kamehameha is a persistent beam: enemies inside it take 2 damage repeatedly.
+      f.kameHitTimer=Math.max(0,f.kameHitTimer-dt);
+      if(f.skillType==="kame" && f.kameHitTimer<=0){
+        var kdx=Math.cos(f.skillDir),kdy=Math.sin(f.skillDir);
+        fighters.forEach(function(e){
+          if(!e.alive||e===f||e.owner===f||!canDamage(e))return;
+          var ex=e.x-f.x,ey=e.y-f.y,along=ex*kdx+ey*kdy,side=Math.abs(ex*kdy-ey*kdx);
+          if(along>15&&along<330&&side<30){
+            e.hp-=2;e.flash=.08;e.vx+=kdx*35;e.vy+=kdy*35;
+            if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;}
+          }
+        });
+        f.kameHitTimer=.15;
+      }
+    }
+
+    // Luffy Kid: Gum-Gum Pistol, ranged hit every 5 seconds.
+    if(f.kind==="Luffy Kid" && !f.owner && f.skillTimer<=0){
+      useLuffyPistol(f,alive);
+      f.skillTimer=5;
+      f.skillFlash=.8;
+      f.skillPulse=.8;
+      showSkillText("🏴‍☠️ GUM-GUM PISTOL!");
+    }
+
+    // Gojo: 10s cooldown. When ready, blue + red charge and merge into a
+    // slightly larger purple sphere, then fire it in the stored direction.
+    if(f.kind==="Gojo" && !f.owner){
+      f.gojoCD=Math.max(0,f.gojoCD-dt);
+      if(f.gojoCharge>0){
+        f.gojoCharge=Math.max(0,f.gojoCharge-dt);
+        f.vx=0; f.vy=0;
+        if(f.gojoCharge<=0){
+          fireGojoPurple(f);
+          f.skillFlash=.9;
+          f.skillPulse=.9;
+          showSkillText("🟣 HƯ THỨC TỬ!");
+        }
+      } else if(f.gojoFire>0){
+        f.gojoFire=Math.max(0,f.gojoFire-dt);
+        f.vx=0; f.vy=0;
+      } else if(f.gojoCD<=0){
+        var gt=skillTargetFor(f);
+        if(gt){
+          f.gojoDir=Math.atan2(gt.y-f.y,gt.x-f.x);
+          f.gojoCharge=3.3;
+          f.gojoCD=10;
+          f.vx=0; f.vy=0;
+          showSkillText("🔵 + 🔴  →  🟣");
+        }
+      }
+    }
+    if(f.kind==="Gojo" && !f.owner) tickGojoProjectile(f,dt);
+
+    // Might Guy: Trú Hổ. Fires a white tiger head toward the nearest enemy every 5s.
+    if(f.kind==="Might Guy" && !f.owner){
+      f.guyCD=Math.max(0,f.guyCD-dt);
+      if(f.guyTiger){
+        var tg=f.guyTiger;
+        tg.x+=tg.vx*dt;tg.y+=tg.vy*dt;tg.life-=dt;
+        // Chỉ thêm cơ chế mới ở Lv8 + dưới 30% HP; không thay đổi logic Lv0-Lv7.
+        if(tg.redLunge){ f.vx=tg.vx; f.vy=tg.vy; }
+        fighters.forEach(function(e){
+          if(tg.hit||!e.alive||e===f||e.owner===f)return;
+          if(Math.hypot(e.x-tg.x,e.y-tg.y)<e.r+tg.r && canDamage(e)){
+            e.hp-=tg.damage*guyDamageMultiplier(f);e.flash=.2;e.vx+=tg.vx*.18;e.vy+=tg.vy*.18;tg.hit=true;
+            if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;if(f.kind==="Might Guy"&&!f.owner){guyKills++;updateGuyUpgrade();saveGame();}}
+          }
+        });
+        if(tg.hit||tg.life<=0||tg.x<-120||tg.x>innerWidth+120||tg.y<-120||tg.y>innerHeight+120){
+          f.guyTiger=null;
+          if(tg.redLunge){ f.vx=0; f.vy=0; }
+        }
+      }
+      if(f.guyCD<=0 && !f.guyTiger){
+        var gt=skillTargetFor(f);
+        if(gt){
+          var gdx=gt.x-f.x,gdy=gt.y-f.y,gd=Math.hypot(gdx,gdy)||1;
+          var redLunge=((f.guyLevelForBattle||0)>=8 && f.hp/f.max<.30);
+          f.guyTiger={x:f.x+gdx/gd*42,y:f.y+gdy/gd*42,vx:gdx/gd*500,vy:gdy/gd*500,life:.9,r:32,damage:guyTigerDamage,hit:false,redLunge:redLunge};
+          if(redLunge){ f.vx=f.guyTiger.vx; f.vy=f.guyTiger.vy; }
+          f.guyCD=5;f.skillFlash=.7;f.skillPulse=.7;showSkillText("🐯 TRÚ HỔ!");
+        }
+      }
+    }
+
+    // Momo Ayase: giant pink-purple hand, 6s cooldown, strong knockback.
+    if(f.kind==="Momo Ayase" && !f.owner){
+      f.momoCD=Math.max(0,f.momoCD-dt);
+      if(f.momoHand) tickMomoHand(f,dt);
+      if(f.momoCD<=0 && !f.momoHand){ useMomoHand(f); }
+    }
+
+    // Pain: black hole pulls enemies for 5s, then explodes. CD 7s.
+    if(f.kind==="Pain" && !f.owner){
+      f.painCD=Math.max(0,f.painCD-dt);
+      if(f.painUltimateCharge>0){
+        f.painUltimateCharge=Math.max(0,f.painUltimateCharge-dt);
+        f.vx=0;f.vy=0;
+        if(f.painUltimateCharge<=0 && !f.painUltimateUsed){
+          f.painUltimateUsed=true;
+          fighters.forEach(function(e){
+            if(!e.alive||e===f||e.owner===f||!canDamage(e))return;
+            e.hp-=100;e.flash=.35;
+            var dx=e.x-f.x,dy=e.y-f.y,d=Math.hypot(dx,dy)||1;
+            e.vx+=(dx/d)*1600;e.vy+=(dy/d)*1600;
+            if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;painKills++;updatePainUpgrade();}
+          });
+          f.skillFlash=1;f.skillPulse=1;showSkillText((f.hp/f.max<.50?"☁️ THẦN LA THIÊN CHINH":"☁️ VẠN TƯỢNG THIÊN DẪN")+"!");
+        }
+      }else{
+        // Lv5 unlocks the one-time full-map ultimate when Pain falls below 50% HP.
+        if((f.painLevelForBattle||0)>=5 && f.hp/f.max<.50 && !f.painUltimateUsed){
+          f.painUltimateCharge=2.5;f.vx=0;f.vy=0;
+          showSkillText((f.hp/f.max<.50?"☁️ THẦN LA THIÊN CHINH":"☁️ VẠN TƯỢNG THIÊN DẪN")+" — TỤ LỰC...");
+        }
+        if(f.painBlackHole)tickPainBlackHole(f,dt);
+        if(f.painCD<=0 && !f.painBlackHole && f.painUltimateCharge<=0){
+          usePainBlackHole(f);
+        }
+      }
+    }
+
+    // Kusakabe Atsuya: Lãnh Địa Giản Dị — 5 giây, CD 9 giây.
+    if(f.kind==="Kusakabe Atsuya" && !f.owner){
+      f.kusaCD=Math.max(0,f.kusaCD-dt);
+      if(f.kusaDomain){
+        var kd=f.kusaDomain; kd.life-=dt; kd.slashTimer-=dt;
+        if(kd.slashTimer<=0){
+          fighters.forEach(function(e){
+            if(!e.alive||e===f||e.owner===f)return;
+            if(Math.hypot(e.x-kd.x,e.y-kd.y)<=kd.r+e.r && canDamage(e)){
+              e.hp-=kd.damage;e.flash=.18;
+              var sx=e.x-kd.x,sy=e.y-kd.y,sd=Math.hypot(sx,sy)||1;
+              e.vx+=(sx/sd)*380;e.vy+=(sy/sd)*380;
+              if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;}
+            }
+          });
+          // Các kỹ năng đang bay/đặt ngoài khi bước vào lãnh địa sẽ bị chém.
+          fighters.forEach(function(e){
+            if(!e.alive||e===f||e.owner===f)return;
+            if(e.gojoProjectile && Math.hypot(e.gojoProjectile.x-kd.x,e.gojoProjectile.y-kd.y)<=kd.r){e.gojoProjectile=null;e.gojoFire=0;}
+            if(e.momoHand && Math.hypot(e.momoHand.x-kd.x,e.momoHand.y-kd.y)<=kd.r)e.momoHand=null;
+            if(e.guyTiger && Math.hypot(e.guyTiger.x-kd.x,e.guyTiger.y-kd.y)<=kd.r)e.guyTiger=null;
+            if(e.painBlackHole && Math.hypot(e.painBlackHole.x-kd.x,e.painBlackHole.y-kd.y)<=kd.r)e.painBlackHole=null;
+          });
+          kd.slashTimer=.45; kd.slash=Math.random()*Math.PI*2;
+        }
+        if(kd.life<=0)f.kusaDomain=null;
+      }
+      if(f.kusaCD<=0 && !f.kusaDomain){
+        f.kusaDomain={x:f.x,y:f.y,r:82,life:5,damage:5,slashTimer:0,slash:0};
+        f.kusaCD=9;f.skillFlash=1;f.skillPulse=1;
+        showSkillText("⚔️ LÃNH ĐỊA GIẢN DỊ!");
+      }
+    }
+
+    // Todoroki Shoto: random ice dash or fire cone every 8 seconds.
+    if(f.kind==="Todoroki Shoto" && !f.owner){
+      f.todorokiCD=Math.max(0,f.todorokiCD-dt);
+      if(f.todorokiUltimateCharge>0){
+        f.todorokiUltimateCharge=Math.max(0,f.todorokiUltimateCharge-dt); f.vx=0;f.vy=0;
+        if(f.todorokiUltimateCharge<=0 && !f.todorokiUltimateUsed){
+          f.todorokiUltimateUsed=true;
+          fighters.forEach(function(e){if(!e.alive||e===f||e.owner===f)return; e.hp-=180;e.flash=.35;e.stunTimer=2.5;e.stunFx=2.5;var dx=e.x-f.x,dy=e.y-f.y,d=Math.hypot(dx,dy)||1;e.vx+=dx/d*900;e.vy+=dy/d*900;if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;todorokiKills++;updateTodorokiUpgrade();saveGame();}});
+          f.skillFlash=1;f.skillPulse=1;showSkillText("🔥❄️ BẠO NỔ SÓNG NHIỆT — CHOÁNG!");
+        }
+      }else{
+        // Resolve ready elements first. If one meter is full while the other is not,
+        // Todoroki MUST use the full element skill before the heat-wave ultimate.
+        if(f.todorokiFireCharge>0){
+          f.todorokiFireCharge=Math.max(0,f.todorokiFireCharge-dt); f.vx=0; f.vy=0;
+          if(f.todorokiFireCharge<=0 && !f.todorokiRedSkillUsed) useTodorokiFireUltimate(f);
+        }
+        if(f.todorokiUltimateCharge<=0 && f.todorokiFireCharge<=0 && !f.todorokiFire && !f.todorokiIce && !f.todorokiRedSkill && !f.todorokiBlueSkill){
+          if(f.todorokiRedReady && !f.todorokiRedSkillUsed && (f.todorokiLevelForBattle||0)>=5){
+            f.todorokiFireCharge=2; f.vx=0; f.vy=0; f.skillFlash=1; f.skillPulse=1;
+            showSkillText("🔥 TỤ LỰC 2s — BẠO HỎA QUYỀN!");
+          }else if(f.todorokiBlueReady && !f.todorokiBlueSkillUsed && (f.todorokiLevelForBattle||0)>=10){
+            useTodorokiIceUltimate(f);
+          }
+        }
+        // Only after BOTH full meters have each spent their corresponding skill,
+        // and all active effects have finished, may Bạo Nổ Sóng Nhiệt begin.
+        if(f.todorokiUltimateCharge<=0 && f.todorokiFireCharge<=0 && !f.todorokiFire && !f.todorokiIce && !f.todorokiRedSkill && !f.todorokiBlueSkill &&
+           f.todorokiRedReady && f.todorokiBlueReady && f.todorokiRedSkillUsed && f.todorokiBlueSkillUsed &&
+           (f.todorokiLevelForBattle||0)>=10 && f.hp/f.max<.50 && !f.todorokiUltimateUsed){
+          f.todorokiUltimateCharge=5;f.vx=0;f.vy=0;showSkillText("🔥❄️ TỤ LỰC 5s — SÓNG NHIỆT!");
+        }
+        if(f.todorokiCD<=0 && f.todorokiUltimateCharge<=0 && !f.todorokiRedSkill && !f.todorokiBlueSkill){
+          var tt=skillTargetFor(f);
+          if(tt){
+            var tdx=tt.x-f.x,tdy=tt.y-f.y,td=Math.hypot(tdx,tdy)||1,dir=Math.atan2(tdy,tdx);
+            if(Math.random()<0.5){
+              f.todorokiIce={x:f.x,y:f.y,dir:dir,vx:tdx/td*760,vy:tdy/td*760,life:1.15,r:34,hit:false};
+              f.todorokiIceCount++; if(f.todorokiIceCount>=2){f.todorokiBlueReady=(f.todorokiLevelForBattle||0)>=10;}
+              f.todorokiCD=8;f.vx=f.todorokiIce.vx;f.vy=f.todorokiIce.vy;f.skillFlash=.8;f.skillPulse=.8;showSkillText("❄️ ĐƯỜNG BĂNG TỐC ĐỘ!");
+            }else{
+              f.todorokiFire={dir:dir,life:1.6,tick:0};
+              f.todorokiFireCount++; if(f.todorokiFireCount>=2){f.todorokiRedReady=(f.todorokiLevelForBattle||0)>=5;}
+              f.todorokiCD=8;f.vx=0;f.vy=0;f.skillFlash=.8;f.skillPulse=.8;showSkillText("🔥 ĐƯỜNG LỬA!");
+            }
+          }
+        }
+        if(f.todorokiIce){
+          var ic=f.todorokiIce;ic.x+=ic.vx*dt;ic.y+=ic.vy*dt;ic.life-=dt;f.vx=ic.vx;f.vy=ic.vy;
+          fighters.forEach(function(e){if(ic.hit||!e.alive||e===f||e.owner===f)return;if(Math.hypot(e.x-ic.x,e.y-ic.y)<e.r+ic.r && canDamage(e)){e.hp-=42;e.flash=.2;e.vx+=ic.vx*.35;e.vy+=ic.vy*.35;ic.hit=true;if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;todorokiKills++;updateTodorokiUpgrade();saveGame();}}});
+          if(ic.hit||ic.life<=0||ic.x<-150||ic.x>innerWidth+150||ic.y<-150||ic.y>innerHeight+150){f.todorokiIce=null;f.vx=0;f.vy=0;}
+        }
+        if(f.todorokiRedSkill)tickTodorokiFireUltimate(f,dt);
+        if(f.todorokiBlueSkill)tickTodorokiIceUltimate(f,dt);
+        if(f.todorokiFire){
+          var fr=f.todorokiFire;fr.life-=dt;fr.tick-=dt;f.vx=0;f.vy=0;
+          if(fr.tick<=0){var fx=Math.cos(fr.dir),fy=Math.sin(fr.dir);fighters.forEach(function(e){if(!e.alive||e===f||e.owner===f)return;var ex=e.x-f.x,ey=e.y-f.y,along=ex*fx+ey*fy,side=Math.abs(ex*fy-ey*fx);if(along>15&&along<230&&side<along*.42+28 && canDamage(e)){e.hp-=5;e.flash=.08;e.vx+=fx*35;e.vy+=fy*35;if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;todorokiKills++;updateTodorokiUpgrade();saveGame();}}});fr.tick=.2;}
+          if(fr.life<=0)f.todorokiFire=null;
+        }
+      }
+    }
+
+    // Zenitsu: Thunderclap and Flash. 3s charge, then a fast sword dash through the target.
+if(f.kind==="Zenitsu" && !f.owner){
+      f.zenitsuCD=Math.max(0,f.zenitsuCD-dt);
+      if(f.zenitsuCharge>0){
+        f.zenitsuCharge=Math.max(0,f.zenitsuCharge-dt);
+        f.vx=0; f.vy=0;
+        if(f.zenitsuCharge<=0){
+          var zt=skillTargetFor(f);
+          if(zt){
+            f.zenitsuDir=Math.atan2(zt.y-f.y,zt.x-f.x);
+            f.zenitsuDash=.48;
+            f.zenitsuHit=false;
+            f.zenitsuTrail=[];
+            f.zenitsuCD=8;
+            f.skillFlash=.9;
+            f.skillPulse=.9;
+            showSkillText("⚡ PHÍCH LỊCH NHẤT THIỂM!");
+          }else{
+            f.zenitsuCD=1;
+          }
+        }
+      } else if(f.zenitsuDash>0){
+        f.zenitsuDash=Math.max(0,f.zenitsuDash-dt);
+        var zd=1-Math.max(0,Math.min(1,f.zenitsuDash/.48));
+        var zdx=Math.cos(f.zenitsuDir),zdy=Math.sin(f.zenitsuDir);
+        f.vx=zdx*1050; f.vy=zdy*1050;
+        f.zenitsuTrail.push({x:f.x,y:f.y,life:.34});
+        if(f.zenitsuTrail.length>18)f.zenitsuTrail.shift();
+
+        // Slash through an opponent, not stopping on contact.
+        fighters.forEach(function(e){
+          if(f.zenitsuHit||!e.alive||e===f||e.owner===f)return;
+          var ex=e.x-f.x,ey=e.y-f.y;
+          var along=ex*zdx+ey*zdy,side=Math.abs(ex*zdy-ey*zdx);
+          if(Math.abs(along)<48 && side<42 && canDamage(e)){
+            e.hp-=f.dmg*3.0;
+            e.flash=.25;
+            e.vx+=zdx*700; e.vy+=zdy*700;
+            f.zenitsuHit=true;
+            if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;}
+          }
+        });
+        if(f.zenitsuDash<=0){f.vx=0;f.vy=0;}
+      } else if(f.zenitsuCD<=0){
+        var zt0=skillTargetFor(f);
+        if(zt0){
+          f.zenitsuDir=Math.atan2(zt0.y-f.y,zt0.x-f.x);
+          f.zenitsuCharge=3;
+          f.vx=0;f.vy=0;
+          showSkillText("⚡ TỤ LỰC 3s...");
+        }
+      }
+    }
+
+    if(f.kind==="Zenitsu" && !f.owner && f.zenitsuDash<=0 && f.zenitsuCharge<=0 && f.zenitsuCD<=0){
+      f.vx=0;f.vy=0;
+    }
+
+    if(f.kind==="Zenitsu" && !f.owner && (f.zenitsuCharge>0 || f.zenitsuDash>0)){
+      // Locked in place while charging or dashing.
+    } else if(f.hitLock<=0 && (f.freezeTimer||0)<=0 && !(f.kind==="Might Guy" && !f.owner && f.guyTiger && f.guyTiger.redLunge) && !(f.kind==="Pain" && !f.owner && f.painUltimateCharge>0) && !(f.kind==="Kusakabe Atsuya" && !f.owner && f.kusaDomain) && !(f.kind==="Todoroki Shoto" && !f.owner && (f.todorokiUltimateCharge>0 || f.todorokiFireCharge>0))){
+      var target=null,best=Infinity;
+      alive.forEach(function(e){
+        if(!canTarget(f,e))return;
+        var dx=e.x-f.x,dy=e.y-f.y,d=dx*dx+dy*dy;
+        if(d<best){best=d;target=e;}
+      });
+      if(target){
+        var dx=target.x-f.x,dy=target.y-f.y,d=Math.hypot(dx,dy)||1;
+        var wantX=dx/d*f.spd,wantY=dy/d*f.spd;
+        f.vx+=(wantX-f.vx)*Math.min(1,dt*7);
+        f.vy+=(wantY-f.vy)*Math.min(1,dt*7);
+      }
+    }else{
+      // Friction during the brief knockback lock.
+      f.vx*=Math.pow(.12,dt);
+      f.vy*=Math.pow(.12,dt);
+    }
+
+    f.x+=f.vx*dt;f.y+=f.vy*dt;
+    f.x=Math.max(f.r+12,Math.min(innerWidth-f.r-12,f.x));
+    f.y=Math.max(80+f.r,Math.min(innerHeight-f.r-12,f.y));
+  });
+
+  // Hard physical separation + one hit per contact.
+  // This is intentionally stronger than the old version so characters cannot sit on top of each other.
+  for(var i=0;i<fighters.length;i++)for(var j=i+1;j<fighters.length;j++){
+    var a=fighters[i],b=fighters[j];
+    if(!a.alive||!b.alive)continue;
+    if(a.owner && a.owner===b.owner)continue;
+
+    var dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.001,min=a.r+b.r+2;
+    if(d<min){
+      var nx=dx/d,ny=dy/d,o=min-d;
+
+      // Move them physically apart, even if they have zero velocity.
+      a.x-=nx*o*.55;a.y-=ny*o*.55;
+      b.x+=nx*o*.55;b.y+=ny*o*.55;
+
+      // Always add an outward impulse so they don't get sucked back together.
+      var impulse=220;
+      a.vx-=nx*impulse;a.vy-=ny*impulse;
+      b.vx+=nx*impulse;b.vy+=ny*impulse;
+
+      // Same Naruto team (owner + clones) must NEVER attack each other.
+      var sameNarutoTeam = (a.owner && a.owner===b.owner) ||
+                           (a.owner===b && b.kind==="Naruto Kid") ||
+                           (b.owner===a && a.kind==="Naruto Kid");
+      // Only deal damage if attack cooldown is ready.
+      if(!sameNarutoTeam && a.timer<=0 && a.hitLock<=0 && (a.freezeTimer||0)<=0 && (b.freezeTimer||0)<=0)damage(a,b,nx,ny);
+      if(!sameNarutoTeam && b.timer<=0 && b.hitLock<=0 && b.alive && (b.freezeTimer||0)<=0 && (a.freezeTimer||0)<=0)damage(b,a,-nx,-ny);
+    }
+  }
+
+  // Remove expired Naruto clones.
+  fighters.forEach(function(f){
+    if(f.alive && f.owner && f.life!==undefined){
+      f.life-=dt;
+      if(f.life<=0){f.alive=false;}
+    }
+  });
+
+  alive=fighters.filter(function(f){return f.alive;});
+  if(alive.length<=1){
+    running=false;var w=alive[0];
+    $("winName").textContent=w?w.icon+" "+w.name+" WINS!":"DRAW!";
+    $("winInfo").textContent=w?"KOs: "+w.kills+" • HP: "+Math.ceil(w.hp)+" / "+w.max:"Everyone was knocked out.";
+    $("winBox").classList.remove("hide");
+  }
+}
+
+function spawnClone(owner,side){
+  var ang=Math.atan2(owner.vy,owner.vx)||0;
+  var px=owner.x+Math.cos(ang+side*.8)*42;
+  var py=owner.y+Math.sin(ang+side*.8)*42;
+  fighters.push({
+    name:"Shadow Clone",icon:"🍥",max:55,hp:55,dmg:10,spd:owner.spd*1.03,cd:1.2,
+    timer:.2,skillTimer:0,x:px,y:py,vx:0,vy:0,alive:true,kills:0,r:18,flash:0,
+    kind:"Clone",owner:owner,hitLock:.2,skillFlash:.75,skillPulse:.75,life:7
+  });
+}
+
+
+function fireGojoPurple(f){
+  // Create a real purple projectile that travels forward instead of drawing
+  // a beam directly from Gojo.
+  var dx=Math.cos(f.gojoDir),dy=Math.sin(f.gojoDir);
+  f.gojoProjectile={
+    x:f.x+dx*48,y:f.y+dy*48,
+    vx:dx*620,vy:dy*620,
+    life:0.75,r:27
+  };
+  f.gojoFire=0.75;
+  f.skillFlash=.65;
+  f.skillPulse=.65;
+}
+
+function tickGojoProjectile(f,dt){
+  var p=f.gojoProjectile;
+  if(!p)return;
+  p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
+
+  fighters.forEach(function(e){
+    if(!e.alive||e===f||e.owner===f||p.hit)return;
+    if(Math.hypot(e.x-p.x,e.y-p.y)<e.r+p.r){
+      if(canDamage(e))e.hp-=f.dmg*5.2;
+      e.flash=.28;
+      e.vx+=p.vx*.8;e.vy+=p.vy*.8;
+      p.hit=true;
+      if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;}
+    }
+  });
+
+  if(p.hit||p.life<=0||p.x<-80||p.x>innerWidth+80||p.y<-80||p.y>innerHeight+80){
+    f.gojoProjectile=null;
+    f.gojoFire=0;
+  }
+}
+
+
+function useLuffyPistol(user,alive){
+  var target=null,best=Infinity;
+  alive.forEach(function(e){
+    if(e===user || !e.alive || (e.owner && e.owner===user))return;
+    var dx=e.x-user.x,dy=e.y-user.y,d=Math.hypot(dx,dy);
+    if(d<best && d<260){best=d;target=e;}
+  });
+  if(!target)return;
+  var dx=target.x-user.x,dy=target.y-user.y,d=Math.hypot(dx,dy)||1;
+  // Extend the arm visually with a temporary flash and deal one ranged hit.
+  target.vx+=(dx/d)*520;target.vy+=(dy/d)*520;
+  if(canDamage(target))target.hp-=32;target.flash=.18;user.kills += target.hp<=0 ? 1 : 0;
+  if(target.hp<=0){target.hp=0;target.alive=false;kos++;}
+}
+
+function showSkillText(text){
+  var el=$("skillText");
+  el.textContent=text;
+  el.classList.remove("show");
+  void el.offsetWidth;
+  el.classList.add("show");
+  clearTimeout(window._skillTextTimer);
+  window._skillTextTimer=setTimeout(function(){el.classList.remove("show");},650);
+}
+
+
+function useMomoHand(f){
+  var t=skillTargetFor(f); if(!t)return false;
+  var dx=t.x-f.x,dy=t.y-f.y,d=Math.hypot(dx,dy)||1;
+  f.momoHand={x:f.x+dx/d*42,y:f.y+dy/d*42,vx:dx/d*620,vy:dy/d*620,life:0.95,r:38,damage:50,hit:false,dir:Math.atan2(dy,dx)};
+  f.momoCD=6;f.skillFlash=.8;f.skillPulse=.8;
+  showSkillText("🩷 BÀN TAY KHỔNG LỒ!");
+  return true;
+}
+function tickMomoHand(f,dt){
+  var h=f.momoHand; if(!h)return;
+  h.x+=h.vx*dt;h.y+=h.vy*dt;h.life-=dt;
+  fighters.forEach(function(e){
+    if(h.hit||!e.alive||e===f||e.owner===f)return;
+    if(Math.hypot(e.x-h.x,e.y-h.y)<e.r+h.r){
+      if(canDamage(e))e.hp-=h.damage;
+      e.flash=.22;
+      var d=Math.hypot(h.vx,h.vy)||1;
+      e.vx+=(h.vx/d)*900;
+      e.vy+=(h.vy/d)*900;
+      e.x+=(h.vx/d)*10;e.y+=(h.vy/d)*10;
+      h.hit=true;
+      if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;}
+    }
+  });
+  if(h.hit||h.life<=0||h.x<-140||h.x>innerWidth+140||h.y<-140||h.y>innerHeight+140)f.momoHand=null;
+}
+function drawMomoHand(h){
+  if(!h)return;
+  var a=h.dir||Math.atan2(h.vy,h.vx);
+  ctx.save();ctx.translate(h.x,h.y);ctx.rotate(a);
+  ctx.globalCompositeOperation="lighter";
+  ctx.shadowBlur=24;ctx.shadowColor="#ff4fd8";
+  ctx.strokeStyle="#b72cff";ctx.lineWidth=30;ctx.lineCap="round";
+  ctx.beginPath();ctx.moveTo(-92,0);ctx.lineTo(-8,0);ctx.stroke();
+  ctx.strokeStyle="#ff72e7";ctx.lineWidth=22;
+  ctx.beginPath();ctx.moveTo(-84,0);ctx.lineTo(-4,0);ctx.stroke();
+  ctx.fillStyle="#ff5de1";ctx.strokeStyle="#e9b6ff";ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(8,0,27,0,Math.PI*2);ctx.fill();ctx.stroke();
+  // Five oversized fingers pointing forward.
+  var fingers=[[-4,-20,48,-34], [2,-10,58,-17], [4,0,64,0], [2,10,58,17], [-4,20,48,34]];
+  fingers.forEach(function(q){
+    ctx.strokeStyle="#ff6de8";ctx.lineWidth=13;ctx.lineCap="round";
+    ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(q[2],q[3]);ctx.stroke();
+    ctx.strokeStyle="#f0baff";ctx.lineWidth=4;
+    ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(q[2],q[3]);ctx.stroke();
+  });
+  ctx.globalAlpha=.8;ctx.strokeStyle="#8f35ff";ctx.lineWidth=5;
+  ctx.beginPath();ctx.moveTo(-105,-13);ctx.lineTo(-20,-13);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-105,13);ctx.lineTo(-20,13);ctx.stroke();
+  ctx.globalAlpha=1;ctx.shadowBlur=0;ctx.restore();
+}
+
+function usePainBlackHole(f){
+  var t=skillTargetFor(f); if(!t)return false;
+  var dx=t.x-f.x,dy=t.y-f.y,d=Math.hypot(dx,dy)||1;
+  f.painBlackHole={x:f.x+dx/d*85,y:f.y+dy/d*85,life:3,r:24,damage:painBlackHoleDamage,exploded:false,pulse:0};
+  f.painCD=7;f.skillFlash=.9;f.skillPulse=.9;
+  showSkillText("☁️ VẠN TƯỢNG THIÊN DẪN!");
+  return true;
+}
+function tickPainBlackHole(f,dt){
+  var h=f.painBlackHole; if(!h)return;
+  h.life-=dt;h.pulse+=dt;
+  var hx=h.x,hy=h.y;
+  var pullRange2=48400,hardRange2=3025;
+  fighters.forEach(function(e){
+    if(!e.alive||e===f||e.owner===f)return;
+    var dx=hx-e.x,dy=hy-e.y,d2=dx*dx+dy*dy;
+    if(d2>=pullRange2)return;
+    var d=Math.sqrt(d2)||1;
+    var pull=(d<70?700:420)*(1-d/260);
+    var force=pull*dt*3/d;
+    e.vx+=dx*force;
+    e.vy+=dy*force;
+    if(d2<hardRange2){
+      var move=Math.min(18,d);
+      e.x+=dx/d*move;
+      e.y+=dy/d*move;
+    }
+  });
+  if(h.life<=0){
+    fighters.forEach(function(e){
+      if(!e.alive||e===f||e.owner===f)return;
+      var dx=e.x-hx,dy=e.y-hy,d2=dx*dx+dy*dy;
+      if(d2<15625){
+        var d=Math.sqrt(d2)||1;
+        if(canDamage(e))if(canDamage(e))e.hp-=h.damage;e.flash=.25;
+        e.vx+=(dx/d)*650;e.vy+=(dy/d)*650;
+        if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;if(f.kind==="Pain"&&!f.owner){painKills++;updatePainUpgrade();saveGame();}}
+      }
+    });
+    f.skillFlash=.8;f.skillPulse=.8;showSkillText("☁️ VẠN TƯỢNG THIÊN DẪN — PHÁT NỔ!");
+    f.painBlackHole=null;
+  }
+}
+function drawPainBlackHole(h){
+  if(!h)return;
+  ctx.save();
+  ctx.translate(h.x,h.y);
+  ctx.globalCompositeOperation="lighter";
+  var pulse=1+Math.sin(h.pulse*7)*.10;
+
+  // Lightweight purple gravity core.
+  ctx.globalAlpha=.9;
+  ctx.fillStyle="#080318";
+  ctx.beginPath();ctx.arc(0,0,52*pulse,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=.28;
+  ctx.fillStyle="#8f45ff";
+  ctx.beginPath();ctx.arc(0,0,45*pulse,0,Math.PI*2);ctx.fill();
+
+  // Three clean rotating gravity rings.
+  ctx.shadowBlur=5;ctx.shadowColor="#b56cff";
+  for(var k=0;k<3;k++){
+    ctx.save();
+    ctx.rotate(h.pulse*(1.5+k*.35)+k*Math.PI/4);
+    ctx.globalAlpha=.35+.08*k;
+    ctx.strokeStyle=k%2?"#e3b7ff":"#8f45ff";
+    ctx.lineWidth=2.5+k;
+    ctx.beginPath();
+    ctx.ellipse(0,0,(34+k*7)*pulse,10+k*4,0,0,Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Event horizon.
+  ctx.globalAlpha=1;ctx.shadowBlur=10;ctx.shadowColor="#7d35ff";
+  ctx.fillStyle="#020106";
+  ctx.beginPath();ctx.arc(0,0,24*pulse,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=4;ctx.strokeStyle="#d7a6ff";ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(0,0,28*pulse,0,Math.PI*2);ctx.stroke();
+
+  // Six short energy sparks.
+  ctx.shadowBlur=0;
+  for(var i=0;i<6;i++){
+    var a=i*Math.PI/3-h.pulse*2.2;
+    var r1=37+Math.sin(h.pulse*5+i)*3;
+    var r2=r1+10;
+    ctx.globalAlpha=.7;
+    ctx.strokeStyle=i%3===0?"#f0c9ff":"#a96cff";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a)*r1,Math.sin(a)*r1);
+    ctx.lineTo(Math.cos(a+.16)*r2,Math.sin(a+.16)*r2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function painWhiteAura(f){
+  if(!f||f.painUltimateCharge<=0)return;
+  ctx.save();
+  ctx.globalCompositeOperation="lighter";
+  var p=1-Math.max(0,Math.min(1,f.painUltimateCharge/2.5));
+  var now=performance.now()/1000;
+  var W=innerWidth,H=innerHeight;
+  var maxR=Math.hypot(W,H)*.72;
+
+  // Core aura around Pain.
+  ctx.globalAlpha=.16+.24*p;
+  ctx.strokeStyle="#f4ecff";ctx.lineWidth=5;ctx.shadowBlur=30;ctx.shadowColor="#b76cff";
+  ctx.beginPath();ctx.arc(f.x,f.y,38+24*p,0,Math.PI*2);ctx.stroke();
+  ctx.shadowBlur=0;
+
+  // Map-wide gravitational waves, expanding from Pain so the ultimate is easy to see.
+  for(var w=0;w<4;w++){
+    var phase=(now*1.8+w*.9)%3.2;
+    var rr=70+phase/3.2*maxR;
+    ctx.globalAlpha=(1-phase/3.2)*(.16+.08*p);
+    ctx.lineWidth=2.5+w*.8;
+    ctx.strokeStyle=w%2?"#d8b4ff":"#ffffff";
+    ctx.beginPath();ctx.arc(f.x,f.y,rr,0,Math.PI*2);ctx.stroke();
+  }
+
+  // Long visible energy streams sweeping across the whole arena.
+  var count=18;
+  for(var i=0;i<count;i++){
+    var a=i*Math.PI*2/count+now*.42;
+    var inner=45+Math.sin(now*3+i)*12;
+    var outer=maxR;
+    ctx.globalAlpha=.10+.06*p;
+    ctx.lineWidth=2.5+(i%3);
+    ctx.strokeStyle=i%2?"#b66cff":"#eee3ff";
+    ctx.beginPath();
+    ctx.moveTo(f.x+Math.cos(a)*inner,f.y+Math.sin(a)*inner);
+    ctx.quadraticCurveTo(
+      f.x+Math.cos(a+.16)*outer*.52,
+      f.y+Math.sin(a+.16)*outer*.52,
+      f.x+Math.cos(a)*outer,
+      f.y+Math.sin(a)*outer
+    );
+    ctx.stroke();
+  }
+
+  // Flying particles pulled toward the center, giving the full-map wind/pressure feel.
+  for(var j=0;j<42;j++){
+    var pa=j*Math.PI*2/42-now*(1.2+(j%4)*.08);
+    var base=(j*97)%Math.max(120,maxR-40)+70;
+    var r=base-(now*95*(1+(j%3)*.12))%base;
+    var px=f.x+Math.cos(pa)*r,py=f.y+Math.sin(pa)*r;
+    var sz=1.5+(j%3)*.8;
+    ctx.globalAlpha=.18+.12*p;
+    ctx.fillStyle=j%2?"#d5b0ff":"#ffffff";
+    ctx.beginPath();ctx.arc(px,py,sz,0,Math.PI*2);ctx.fill();
+  }
+
+  // 12 directional pressure blades near Pain.
+  for(var k=0;k<12;k++){
+    var ka=k*Math.PI/6+now*.9;
+    var rr2=42+Math.sin(now*4+k)*8;
+    ctx.globalAlpha=.35+.15*p;
+    ctx.strokeStyle="#ffffff";ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(f.x+Math.cos(ka)*28,f.y+Math.sin(ka)*28);
+    ctx.lineTo(f.x+Math.cos(ka)*rr2,f.y+Math.sin(ka)*rr2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function guyDamageMultiplier(f){
+  if(!f || f.kind!=="Might Guy") return 1;
+  var lvl=f.guyLevelForBattle||0;
+  var ratio=f.hp/f.max;
+
+  // Lv0: từ đầu đến cuối không có khí và không tăng damage.
+  if(lvl<=0) return 1;
+
+  // Lv1-5: chỉ có mốc 90% HP.
+  if(lvl<=5) return ratio<=.90 ? 1.10 : 1;
+
+  // Lv6: 90% +10%, 70% chuyển khí xanh lá +20%.
+  if(lvl===6){
+    if(ratio<=.70) return 1.20;
+    if(ratio<=.90) return 1.10;
+    return 1;
+  }
+
+  // Lv7: 90% +10%, 70% +20%, 50% chuyển khí xanh lam +30%.
+  if(lvl===7){
+    if(ratio<=.50) return 1.30;
+    if(ratio<=.70) return 1.20;
+    if(ratio<=.90) return 1.10;
+    return 1;
+  }
+
+  // Lv8: thêm mốc 30% -> khí đỏ +50%.
+  if(ratio<=.30) return 1.50;
+  if(ratio<=.50) return 1.30;
+  if(ratio<=.70) return 1.20;
+  if(ratio<=.90) return 1.10;
+  return 1;
+}
+function canDamage(vic){return !!vic;}
+function damage(att,vic,nx,ny){
+  if(!canDamage(vic))return;
+  var dealt=att.dmg*guyDamageMultiplier(att);
+  vic.hp-=dealt;
+  att.timer=att.cd;
+  att.hitLock=.10;
+  vic.flash=.12;
+  vic.hitLock=.22;
+  var kb=Math.max(260,att.dmg*13);
+  vic.vx+=nx*kb;vic.vy+=ny*kb;
+  // Extra immediate positional push prevents overlap on slow devices.
+  vic.x+=nx*5;vic.y+=ny*5;
+  if(vic.hp<=0){
+    vic.hp=0;vic.alive=false;att.kills++;kos++;
+    if(att.kind==="Might Guy"&&!att.owner){guyKills++;updateGuyUpgrade();}
+    if(att.kind==="Todoroki Shoto"&&!att.owner){todorokiKills++;updateTodorokiUpgrade();saveGame();}
+  }
+}
+function useTodorokiFireUltimate(f){
+  var t=skillTargetFor(f);if(!t)return false;var dx=t.x-f.x,dy=t.y-f.y,d=Math.hypot(dx,dy)||1;
+  f.todorokiRedSkill={x:f.x+dx/d*48,y:f.y+dy/d*48,vx:dx/d*560,vy:dy/d*560,life:1.25,r:58,hit:false};
+  f.todorokiRedSkillUsed=true;f.todorokiCD=3;f.skillFlash=1;f.skillPulse=1;f.vx=0;f.vy=0;showSkillText("🔥 BẠO HỎA QUYỀN!");return true;
+}
+function tickTodorokiFireUltimate(f,dt){
+  var p=f.todorokiRedSkill;if(!p)return;p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
+  fighters.forEach(function(e){
+    if(p.hit||!e.alive||e===f||e.owner===f||!canDamage(e))return;
+    if(Math.hypot(e.x-p.x,e.y-p.y)<e.r+p.r){
+      e.hp-=100;e.flash=.3;e.vx+=p.vx*.7;e.vy+=p.vy*.7;p.hit=true;
+      if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;todorokiKills++;updateTodorokiUpgrade();saveGame();}
+    }
+  });
+  if(p.hit||p.life<=0||p.x<-150||p.x>innerWidth+150||p.y<-150||p.y>innerHeight+150)f.todorokiRedSkill=null;
+}
+function useTodorokiIceUltimate(f){
+  var t=skillTargetFor(f);if(!t)return false;f.todorokiBlueSkill={x:t.x,y:t.y,life:3,r:120,pulse:0,frozen:[],damageTick:0};
+  f.todorokiBlueSkillUsed=true;f.todorokiCD=3;f.skillFlash=1;f.skillPulse=1;f.vx=0;f.vy=0;showSkillText("❄️ ĐẠI BĂNG HẢI TẢO!");return true;
+}
+function tickTodorokiIceUltimate(f,dt){
+  var p=f.todorokiBlueSkill;if(!p)return;
+  p.life-=dt;p.pulse+=dt;p.damageTick=(p.damageTick||0)-dt;
+  // Kẻ địch trong Đại Băng Hải Tảo bị khóa skill nhưng KHÔNG miễn nhiễm damage.
+  fighters.forEach(function(e){
+    if(!e.alive||e===f||e.owner===f)return;
+    var d=(e.x-p.x)*(e.x-p.x)+(e.y-p.y)*(e.y-p.y);
+    if(d<(p.r+e.r)*(p.r+e.r) && !e.todorokiFrozenByZone){
+      e.todorokiFrozenByZone=true; e.freezeTimer=p.life; e.vx=0;e.vy=0;e.flash=.18;
+      p.frozen.push(e);
+    }
+  });
+  // Gây damage định kỳ khi đang đứng trong vùng băng, kể cả lúc đã bị đóng băng.
+  if(p.damageTick<=0){
+    fighters.forEach(function(e){
+      if(!e.alive||e===f||e.owner===f)return;
+      var d=Math.hypot(e.x-p.x,e.y-p.y);
+      if(d<p.r+e.r){
+        e.hp-=10;e.flash=.12;
+        if(e.hp<=0){e.hp=0;e.alive=false;f.kills++;kos++;todorokiKills++;updateTodorokiUpgrade();saveGame();}
+      }
+    });
+    p.damageTick=.25;
+  }
+  if(p.life<=0){
+    p.frozen.forEach(function(e){if(e){e.todorokiFrozenByZone=false;e.freezeTimer=0;e.vx=0;e.vy=0;}});
+    f.todorokiBlueSkill=null;
+  }
+}
+function drawTodorokiFireUltimate(f,p){
+  if(!p)return;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.atan2(p.vy,p.vx));ctx.globalCompositeOperation="lighter";
+  ctx.shadowBlur=30;ctx.shadowColor="#ff4d1a";
+  var g=ctx.createRadialGradient(0,0,8,0,0,58);g.addColorStop(0,"#fff7c2");g.addColorStop(.35,"#ffb52e");g.addColorStop(.75,"#ff4d1a");g.addColorStop(1,"rgba(255,45,0,0)");ctx.fillStyle=g;
+  ctx.beginPath();ctx.arc(0,0,58,0,Math.PI*2);ctx.fill();ctx.fillStyle="#fff0b0";ctx.beginPath();ctx.arc(0,0,34,0,Math.PI*2);ctx.fill();
+  ctx.font="38px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("🔥",0,0);ctx.restore();
+}
+function drawTodorokiIceUltimate(p){
+  if(!p)return;
+  ctx.save();
+  var fade=Math.min(1,p.life/.25);
+  var pulse=Math.sin(p.pulse*5)*3;
+  ctx.globalAlpha=.18*fade;ctx.fillStyle="#7fd8ff";
+  ctx.beginPath();ctx.arc(p.x,p.y,p.r+pulse,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=.75*fade;ctx.strokeStyle="#9eeaff";ctx.lineWidth=4;
+  ctx.beginPath();ctx.arc(p.x,p.y,p.r+pulse,0,Math.PI*2);ctx.stroke();
+  ctx.globalAlpha=.55*fade;ctx.lineWidth=2;
+  for(var i=0;i<8;i++){var a=i*Math.PI/4+p.pulse*.25,r1=28,r2=p.r-10;ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*r1,p.y+Math.sin(a)*r1);ctx.lineTo(p.x+Math.cos(a)*r2,p.y+Math.sin(a)*r2);ctx.stroke();}
+  ctx.globalAlpha=1;ctx.font="42px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("❄️",p.x,p.y);
+  ctx.restore();
+}
+function drawTodorokiAuraAndMeters(f){
+  var lvl=f.todorokiLevelForBattle||0;
+  ctx.save();ctx.lineWidth=3;
+  if(lvl>=5){
+    var fireProgress=f.todorokiRedReady?1:Math.min(1,(f.todorokiFireCount||0)/2);
+    ctx.strokeStyle="rgba(255,107,61,.35)";ctx.beginPath();ctx.arc(f.x-39,f.y-36,8,0,Math.PI*2);ctx.stroke();
+    ctx.lineWidth=4;ctx.strokeStyle="#ff6b3d";ctx.beginPath();ctx.arc(f.x-39,f.y-36,8,-Math.PI/2,-Math.PI/2+Math.PI*2*fireProgress);ctx.stroke();
+    ctx.font="9px Arial";ctx.fillStyle="#ffb39b";ctx.fillText("🔥",f.x-39,f.y-47);
+  }
+  if(lvl>=10){
+    var iceProgress=f.todorokiBlueReady?1:Math.min(1,(f.todorokiIceCount||0)/2);
+    ctx.lineWidth=3;ctx.strokeStyle="rgba(77,169,255,.35)";ctx.beginPath();ctx.arc(f.x+39,f.y-36,8,0,Math.PI*2);ctx.stroke();
+    ctx.lineWidth=4;ctx.strokeStyle="#4da9ff";ctx.beginPath();ctx.arc(f.x+39,f.y-36,8,-Math.PI/2,-Math.PI/2+Math.PI*2*iceProgress);ctx.stroke();
+    ctx.font="9px Arial";ctx.fillStyle="#9fd4ff";ctx.fillText("❄",f.x+39,f.y-47);
+  }
+  // Tụ lực Bạo Nổ Sóng Nhiệt: vòng tròn chia đôi đỏ/xanh, không dùng thanh loading.
+  if(f.todorokiUltimateCharge>0){
+    var upPulse=1+Math.sin((10-f.todorokiUltimateCharge)*7)*.06;
+    ctx.globalCompositeOperation="lighter";
+    ctx.globalAlpha=.18;ctx.fillStyle="#fff0d0";ctx.shadowBlur=30;ctx.shadowColor="#ffcf8a";
+    ctx.beginPath();ctx.arc(f.x,f.y,58*upPulse,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=.95;ctx.lineWidth=7;
+    ctx.strokeStyle="#e64b4b";ctx.beginPath();ctx.arc(f.x,f.y,68*upPulse,-Math.PI/2,Math.PI/2);ctx.stroke();
+    ctx.strokeStyle="#4d91ff";ctx.beginPath();ctx.arc(f.x,f.y,68*upPulse,Math.PI/2,Math.PI*1.5);ctx.stroke();
+    ctx.globalAlpha=1;ctx.shadowBlur=0;
+  }
+  ctx.fillStyle="#e64b4b";ctx.beginPath();ctx.arc(f.x-7,f.y-3,13,Math.PI*.55,Math.PI*1.5);ctx.fill();ctx.fillStyle="#4d91ff";ctx.beginPath();ctx.arc(f.x+7,f.y-3,13,-Math.PI*.5,Math.PI*.5);ctx.fill();ctx.restore();
+}
+function drawTodorokiIce(ic){
+  ctx.save();ctx.translate(ic.x,ic.y);ctx.rotate(ic.dir);ctx.globalAlpha=Math.min(1,ic.life*2);ctx.globalCompositeOperation="lighter";
+  ctx.shadowBlur=22;ctx.shadowColor="#6fc8ff";ctx.fillStyle="#aee7ff";ctx.strokeStyle="#4b9fff";ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(-70,0);ctx.lineTo(-28,-20);ctx.lineTo(55,-15);ctx.lineTo(95,0);ctx.lineTo(55,15);ctx.lineTo(-28,20);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle="#e8f8ff";ctx.beginPath();ctx.moveTo(-35,-8);ctx.lineTo(70,-5);ctx.lineTo(35,5);ctx.lineTo(-35,8);ctx.closePath();ctx.fill();ctx.restore();
+}
+function drawTodorokiFire(f,fr){
+  ctx.save();ctx.translate(f.x,f.y);ctx.rotate(fr.dir);ctx.globalCompositeOperation="lighter";ctx.globalAlpha=.85;ctx.shadowBlur=28;ctx.shadowColor="#ff6a2a";
+  var g=ctx.createLinearGradient(20,0,235,0);g.addColorStop(0,"#fff1b0");g.addColorStop(.35,"#ff9a32");g.addColorStop(1,"rgba(255,60,20,0)");ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(18,-18);ctx.quadraticCurveTo(95,-105,235,0);ctx.quadraticCurveTo(95,105,18,18);ctx.closePath();ctx.fill();ctx.restore();
+}
+function drawGuyAura(f){
+  if(!f || f.kind!=="Might Guy" || f.max<=0)return;
+
+  var lvl=f.guyLevelForBattle||0;
+  var ratio=f.hp/f.max;
+
+  // Lv0: hoàn toàn không có khí.
+  if(lvl<=0 || ratio>.90)return;
+
+  // Chọn đúng màu theo CẤP + MỐC HP đã mở.
+  // Lv1-5: <=90% chỉ khí nóng.
+  // Lv6: <=90% nóng, <=70% xanh lá.
+  // Lv7: <=90% nóng, <=70% xanh lá, <=50% xanh lam.
+  // Lv8: thêm <=30% khí đỏ.
+  var type="hot";
+  if(lvl>=6 && ratio<=.70) type="green";
+  if(lvl>=7 && ratio<=.50) type="blue";
+  if(lvl>=8 && ratio<=.30) type="red";
+
+  var color=type==="hot"?"#ffb14e":(type==="green"?"#39ff88":(type==="blue"?"#35a9ff":"#ff3030"));
+  var threshold=type==="hot"?.90:(type==="green"?.70:(type==="blue"?.50:.30));
+  var power=Math.max(.45,Math.min(1.45,(threshold-ratio)/Math.max(.01,threshold)+.45));
+
+  ctx.save();
+  ctx.globalCompositeOperation="lighter";
+  for(var i=0;i<10;i++){
+    var a=(i/10)*Math.PI*2+performance.now()/900*(i%2?1:-1);
+    var rr=30+(i%4)*5;
+    var x=f.x+Math.cos(a)*rr,y=f.y+Math.sin(a)*rr;
+    ctx.globalAlpha=.18*power;
+    ctx.strokeStyle=color;ctx.lineWidth=2+(i%3);
+    ctx.beginPath();
+    ctx.moveTo(x,y);
+    ctx.quadraticCurveTo(x+Math.cos(a+.8)*9,y+Math.sin(a+.8)*9,x+Math.cos(a)*14,y+Math.sin(a)*14);
+    ctx.stroke();
+  }
+  ctx.globalAlpha=.20*power;ctx.fillStyle=color;ctx.shadowBlur=24;ctx.shadowColor=color;
+  ctx.beginPath();ctx.arc(f.x,f.y,31+7*power,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.restore();
+}
+function drawKusakabeDomain(d){
+  if(!d)return;
+  ctx.save();ctx.translate(d.x,d.y);
+  var fade=Math.min(1,d.life/.7);
+  ctx.globalAlpha=.16*fade;ctx.fillStyle="#e8f1ff";ctx.beginPath();ctx.arc(0,0,d.r,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=.78*fade;ctx.strokeStyle="#dce8f5";ctx.lineWidth=3;ctx.setLineDash([10,7]);ctx.beginPath();ctx.arc(0,0,d.r,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  var sa=d.slash||0;
+  for(var j=0;j<3;j++){ctx.save();ctx.rotate(sa+j*2.1);ctx.globalAlpha=.9*fade;ctx.strokeStyle="#fff";ctx.lineWidth=4;ctx.shadowBlur=12;ctx.shadowColor="#d8e8ff";ctx.beginPath();ctx.arc(0,0,d.r*.78+j*5,-.42,.42);ctx.stroke();ctx.restore();}
+  ctx.restore();
+}
+function drawKusakabeSword(f){
+  ctx.save();ctx.translate(f.x,f.y+22);ctx.rotate(-.08);ctx.lineCap="round";
+  ctx.strokeStyle="#171a20";ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(-25,0);ctx.lineTo(36,0);ctx.stroke();
+  ctx.strokeStyle="#edf3f8";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-17,0);ctx.lineTo(35,0);ctx.stroke();
+  ctx.strokeStyle="#d6a83d";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-17,-8);ctx.lineTo(-17,8);ctx.stroke();
+  ctx.strokeStyle="#6b4725";ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(-25,0);ctx.lineTo(-33,0);ctx.stroke();ctx.restore();
+}
+
+function draw(){
+  var W=innerWidth,H=innerHeight;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle="#111820";ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle="#33404e";ctx.lineWidth=3;ctx.strokeRect(12,62,W-24,H-74);
+  fighters.forEach(function(f){
+    if(!f.alive)return;
+    if(f.kind==="Might Guy" && !f.owner){
+      drawGuyAura(f);
+    }
+    if(f.kind==="Todoroki Shoto" && !f.owner){
+      drawTodorokiAuraAndMeters(f);
+      if(f.todorokiFireCharge>0){
+        // Hiệu ứng tụ lực mới: lửa xoáy + hạt lửa + thanh tiến trình, không dùng vòng tròn quanh người.
+        ctx.save();
+        var prog=1-Math.max(0,Math.min(1,f.todorokiFireCharge/3));
+        var spin=performance.now()/220;
+        ctx.globalCompositeOperation="lighter";
+        for(var fi=0;fi<8;fi++){
+          var fa=spin+fi*Math.PI/4;
+          var fr=30+8*Math.sin(prog*Math.PI);
+          var fx=f.x+Math.cos(fa)*fr, fy=f.y+Math.sin(fa)*fr;
+          ctx.globalAlpha=.45+.45*prog;
+          ctx.shadowBlur=14;ctx.shadowColor="#ff5a16";ctx.fillStyle=fi%2?"#ff9d1c":"#fff0a0";
+          ctx.beginPath();ctx.arc(fx,fy,3+2*prog,0,Math.PI*2);ctx.fill();
+        }
+        ctx.globalAlpha=.9;ctx.shadowBlur=10;ctx.shadowColor="#ff3b00";ctx.fillStyle="#ff6a18";
+        ctx.beginPath();ctx.arc(f.x+Math.cos(spin)*18,f.y+Math.sin(spin)*18,7+4*prog,0,Math.PI*2);ctx.fill();
+        ctx.shadowBlur=0;ctx.globalAlpha=1;
+        var bw=74,bh=7,bx=f.x-bw/2,by=f.y-f.r-25;
+        ctx.fillStyle="rgba(30,10,5,.85)";ctx.fillRect(bx,by,bw,bh);
+        ctx.fillStyle="#ff6a18";ctx.fillRect(bx,by,bw*prog,bh);
+        ctx.strokeStyle="#ffd28a";ctx.lineWidth=1.5;ctx.strokeRect(bx,by,bw,bh);
+        ctx.font="bold 12px Arial";ctx.textAlign="center";ctx.fillStyle="#ffd28a";
+        ctx.fillText("🔥 BẠO HỎA QUYỀN — TỤ LỰC",f.x,by-7);
+        ctx.restore();
+      }
+      if(f.todorokiIce)drawTodorokiIce(f.todorokiIce);
+      if(f.todorokiFire)drawTodorokiFire(f,f.todorokiFire);
+      if(f.todorokiRedSkill)drawTodorokiFireUltimate(f,f.todorokiRedSkill);
+      if(f.todorokiBlueSkill)drawTodorokiIceUltimate(f.todorokiBlueSkill);
+    }
+    if(f.kind==="Momo Ayase" && !f.owner && f.momoHand){
+      drawMomoHand(f.momoHand);
+    }
+    if(f.kind==="Kusakabe Atsuya" && !f.owner && f.kusaDomain)drawKusakabeDomain(f.kusaDomain);
+    ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
+    ctx.fillStyle=f.flash>0?"#fff":"#273344";ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.stroke();
+    if((f.freezeTimer||0)>0){ctx.save();ctx.globalCompositeOperation="lighter";ctx.strokeStyle="#9fe8ff";ctx.lineWidth=4;ctx.shadowBlur=16;ctx.shadowColor="#5cc8ff";ctx.beginPath();ctx.arc(f.x,f.y,f.r+8,0,Math.PI*2);ctx.stroke();ctx.font="22px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("❄️",f.x,f.y-30);ctx.restore();}
+    if((f.stunTimer||0)>0){
+      ctx.save();
+      ctx.globalCompositeOperation="lighter";
+      var st=performance.now()/170;
+      for(var si=0;si<5;si++){
+        var sa=st+si*Math.PI*2/5, sr=f.r+18+Math.sin(st*2+si)*3;
+        var sx=f.x+Math.cos(sa)*sr, sy=f.y-25+Math.sin(sa)*sr*.55;
+        ctx.fillStyle="#ffe45c";ctx.shadowBlur=12;ctx.shadowColor="#ffd21c";
+        ctx.beginPath();ctx.arc(sx,sy,4,0,Math.PI*2);ctx.fill();
+      }
+      ctx.shadowBlur=0;ctx.font="bold 15px Arial";ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.fillStyle="#ffe45c";ctx.strokeStyle="#5b3b00";ctx.lineWidth=3;
+      ctx.strokeText("💫 STUN",f.x,f.y-f.r-38);ctx.fillText("💫 STUN",f.x,f.y-f.r-38);
+      ctx.font="22px system-ui";ctx.fillText("💫",f.x-18,f.y-f.r-18);ctx.fillText("💫",f.x+18,f.y-f.r-18);
+      ctx.restore();
+    }
+    ctx.font="27px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+    if(f.kind==="Kusakabe Atsuya" && !f.owner)drawKusakabeSword(f);
+if(f.alive&&f.skillBusy>0){
+  ctx.save();ctx.translate(f.x,f.y);ctx.rotate(f.skillDir||0);
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  if(f.skillType==="fist"){
+    ctx.fillStyle="#f2c6a0";
+      ctx.strokeStyle="#8f5f43";ctx.lineWidth=2;
+      ctx.beginPath();ctx.roundRect(28,-15,34,30,10);ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.arc(60,0,11,0,Math.PI*2);ctx.fill();ctx.stroke();
+      ctx.fillStyle="#e8b58e";
+      ctx.fillRect(34,-10,7,20);ctx.fillRect(43,-10,7,20);ctx.fillRect(52,-9,7,18);
+  }else{
+    ctx.globalAlpha=.9;ctx.font="34px system-ui";ctx.fillText("🔵",34,0);
+    ctx.beginPath();ctx.lineWidth=22;ctx.moveTo(38,0);ctx.lineTo(300,0);ctx.stroke();
+    ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(38,0);ctx.lineTo(300,0);ctx.stroke();
+  }
+  ctx.restore();
+}
+if(f.kind==="Gojo" && !f.owner && (f.gojoCharge>0 || f.gojoFire>0)){
+  ctx.save();
+  ctx.translate(f.x,f.y);
+  ctx.rotate(f.gojoDir||0);
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  var charging=f.gojoCharge>0;
+  var p=charging ? 1-Math.max(0,Math.min(1,(f.gojoCharge/3.3))) : 1;
+  if(charging){
+    // Blue and red spheres visibly converge toward the center.
+    var sep=62*(1-p);
+    ctx.globalAlpha=.35+.65*(1-p);
+    ctx.font="34px system-ui";
+    ctx.fillText("🔵",-sep,0);
+    ctx.fillText("🔴",sep,0);
+    ctx.globalAlpha=.35+.65*p;
+    ctx.beginPath();ctx.arc(0,0,10+18*p,0,Math.PI*2);
+    ctx.fillStyle="#b58cff";ctx.fill();
+    ctx.globalAlpha=1;
+  }else if(f.gojoFire>0 && !f.gojoProjectile){
+    // Short release flash: the orb appears before it starts flying.
+    ctx.shadowBlur=22;ctx.shadowColor="#b56cff";
+    ctx.beginPath();ctx.arc(42,0,27,0,Math.PI*2);
+    ctx.fillStyle="#8d45ff";ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.lineWidth=5;ctx.strokeStyle="#e4c8ff";ctx.stroke();
+  }
+  ctx.restore();
+}
+if(f.kind==="Might Guy" && !f.owner && f.guyTiger){
+  var tg=f.guyTiger,ta=Math.atan2(tg.vy,tg.vx);
+  ctx.save();ctx.translate(tg.x,tg.y);ctx.rotate(ta);ctx.globalAlpha=Math.min(1,tg.life*2);
+  var tigerRed=!!tg.redLunge;
+  ctx.shadowBlur=18;ctx.shadowColor=tigerRed?"#ff3030":"#fff";ctx.fillStyle=tigerRed?"#e52b2b":"#fff";ctx.strokeStyle=tigerRed?"#7a1111":"#d7dce4";ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(0,0,36,26,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-26,-18);ctx.lineTo(-44,-34);ctx.lineTo(-32,-7);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-26,18);ctx.lineTo(-44,34);ctx.lineTo(-32,7);ctx.fill();ctx.stroke();
+  ctx.fillStyle="#111";ctx.beginPath();ctx.arc(14,-9,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(14,9,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=tigerRed?"#ff5a5a":"#fff";ctx.beginPath();ctx.moveTo(36,0);ctx.lineTo(54,-9);ctx.lineTo(54,9);ctx.closePath();ctx.fill();
+  ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.restore();
+}
+
+if(f.kind==="Zenitsu" && !f.owner){
+  // Lightning trail left behind during the dash.
+  if(f.zenitsuTrail.length){
+    ctx.save();
+    ctx.lineCap="round";ctx.lineJoin="round";
+    f.zenitsuTrail.forEach(function(tr,i){
+      var a=tr.life/.34;
+      ctx.globalAlpha=a*.85;
+      ctx.strokeStyle="#7de7ff";
+      ctx.lineWidth=3+(i%3);
+      ctx.beginPath();
+      ctx.moveTo(tr.x-10,tr.y+6);
+      ctx.lineTo(tr.x+5,tr.y-8);
+      ctx.lineTo(tr.x+13,tr.y+3);
+      ctx.stroke();
+    });
+    ctx.globalAlpha=1;ctx.restore();
+  }
+  if(f.zenitsuCharge>0){
+    ctx.save();ctx.translate(f.x,f.y);ctx.rotate(f.zenitsuDir||0);
+    var zprog=1-Math.max(0,Math.min(1,f.zenitsuCharge/3));
+    // Clean 3-second charge: ring + sparks + converging lightning.
+    ctx.globalAlpha=.28+.62*zprog;ctx.shadowBlur=18;ctx.shadowColor="#ffe45c";
+    ctx.strokeStyle="#ffe45c";ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,29+9*zprog,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;
+    for(var zi=0;zi<6;zi++){
+      var za=(Math.PI*2/6)*zi+zprog*.8,zr=30+6*Math.sin(zprog*Math.PI);
+      var zx=Math.cos(za)*zr,zy=Math.sin(za)*zr;
+      ctx.beginPath();ctx.moveTo(zx*.72,zy*.72);ctx.lineTo(zx+Math.cos(za+.45)*8,zy+Math.sin(za+.45)*8);ctx.lineTo(zx+Math.cos(za)*2,zy+Math.sin(za)*2);ctx.stroke();
+    }
+    ctx.fillStyle="#fff6a6";
+    for(var sp=0;sp<5;sp++){var sa=sp*1.25+zprog*2,sr=18-7*zprog;ctx.beginPath();ctx.arc(Math.cos(sa)*sr,Math.sin(sa)*sr,2.2,0,Math.PI*2);ctx.fill();}
+    ctx.globalAlpha=1;ctx.fillStyle="#ffe45c";ctx.font="bold 13px Arial";ctx.fillText("⚡ 3s",0,-47);ctx.restore();
+  }
+  if(f.zenitsuDash>0){
+    ctx.save();ctx.translate(f.x,f.y);ctx.rotate(f.zenitsuDir||0);
+    ctx.strokeStyle="#fff6a6";ctx.lineWidth=5;
+    ctx.beginPath();ctx.moveTo(18,-12);ctx.lineTo(70,-12);ctx.stroke();
+    ctx.strokeStyle="#d9ecff";ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(18,-12);ctx.lineTo(70,-12);ctx.stroke();
+    ctx.restore();
+  }
+  // Sword carried horizontally at the same waist / center position.
+  ctx.save();ctx.translate(f.x+1,f.y+23);ctx.rotate(0);ctx.lineCap="round";
+  ctx.strokeStyle="#171a20";ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(-22,0);ctx.lineTo(34,0);ctx.stroke();
+  ctx.strokeStyle="#e8f0f7";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-16,0);ctx.lineTo(34,0);ctx.stroke();
+  ctx.strokeStyle="#e0b34a";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-16,-7);ctx.lineTo(-16,7);ctx.stroke();
+  ctx.restore();
+}
+if(f.kind==="Gojo" && !f.owner && f.gojoProjectile){
+  var p=f.gojoProjectile;
+  var ang=Math.atan2(p.vy,p.vx);
+  ctx.save();
+  ctx.translate(p.x,p.y);
+  ctx.rotate(ang);
+  // The attack is a flying purple BALL, with a short glowing tail.
+  ctx.globalAlpha=.35;
+  ctx.beginPath();ctx.arc(-25,0,16,0,Math.PI*2);
+  ctx.fillStyle="#8d45ff";ctx.fill();
+  ctx.globalAlpha=.7;
+  ctx.beginPath();ctx.ellipse(-38,0,34,11,0,0,Math.PI*2);
+  ctx.fillStyle="#b56cff";ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.shadowBlur=25;ctx.shadowColor="#a85cff";
+  ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);
+  ctx.fillStyle="#8d45ff";ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.lineWidth=5;ctx.strokeStyle="#ead8ff";ctx.stroke();
+  ctx.beginPath();ctx.arc(-7,-7,9,0,Math.PI*2);
+  ctx.fillStyle="#d9b8ff";ctx.globalAlpha=.8;ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+if(f.kind==="Pain"&&!f.owner){ctx.save();ctx.translate(f.x,f.y);ctx.shadowBlur=10;ctx.shadowColor="#a855f7";ctx.fillStyle="#a855f7";ctx.beginPath();ctx.ellipse(-9,0,10,6,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(9,0,10,6,0,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle="#160026";ctx.beginPath();ctx.arc(-9,0,3.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(9,0,3.5,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#ead8ff";ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(-9,0,10,6,0,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.ellipse(9,0,10,6,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
+    else if(f.kind==="Todoroki Shoto"&&!f.owner){
+      ctx.save();
+      ctx.beginPath();ctx.arc(f.x,f.y+2,17,0,Math.PI*2);ctx.fillStyle="#f2c6a0";ctx.fill();
+      ctx.save();ctx.beginPath();ctx.arc(f.x,f.y+2,17,Math.PI,Math.PI*2);ctx.clip();ctx.fillStyle="#d83b3b";ctx.beginPath();ctx.ellipse(f.x-8,f.y-10,18,15,0,0,Math.PI*2);ctx.fill();ctx.restore();
+      ctx.save();ctx.beginPath();ctx.arc(f.x,f.y+2,17,0,Math.PI);ctx.clip();ctx.fillStyle="#4da9ff";ctx.beginPath();ctx.ellipse(f.x+8,f.y-10,18,15,0,0,Math.PI*2);ctx.fill();ctx.restore();
+      ctx.fillStyle="#222";ctx.beginPath();ctx.arc(f.x-6,f.y+5,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(f.x+6,f.y+5,2,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    }else{ctx.fillText(f.icon,f.x,f.y);}
+    ctx.fillStyle="#000";ctx.fillRect(f.x-28,f.y-40,56,7);
+    ctx.fillStyle="#55df68";ctx.fillRect(f.x-28,f.y-40,56*(f.hp/f.max),7);
+    ctx.font="10px Arial";ctx.fillStyle="#fff";ctx.fillText(f.name,f.x,f.y+39);
+    if(f.kills)ctx.fillText("☠ "+f.kills,f.x,f.y+51);
+    if(f.kind==="Naruto Kid" && !f.owner){
+      ctx.fillStyle="#fff";ctx.fillText("Clone: "+Math.ceil(f.skillTimer)+"s",f.x,f.y+63);
+    }
+    if(f.kind==="Luffy Kid" && !f.owner){
+      ctx.fillStyle="#fff";ctx.fillText("Pistol: "+Math.ceil(f.skillTimer)+"s",f.x,f.y+63);
+    }
+    if(f.kind==="Goku" && !f.owner){
+      ctx.fillStyle="#fff";
+      ctx.fillText("Kamehameha: "+Math.ceil(f.skillTimer)+"s",f.x,f.y+63);
+    }
+    if(f.kind==="Gojo" && !f.owner){
+      ctx.fillStyle="#fff";
+      if(f.gojoCharge>0) ctx.fillText("Hư Thức Tử: TỤ "+f.gojoCharge.toFixed(1)+"s",f.x,f.y+63);
+      else if(f.gojoFire>0 || f.gojoProjectile) ctx.fillText("Hư Thức Tử: 🟣 BAY!",f.x,f.y+63);
+      else ctx.fillText("Hư Thức Tử CD: "+Math.ceil(f.gojoCD)+"s",f.x,f.y+63);
+    }
+    if(f.kind==="Momo Ayase" && !f.owner){
+      ctx.fillStyle="#fff";
+      ctx.fillText("Bàn Tay Khổng Lồ CD: "+Math.ceil(f.momoCD)+"s",f.x,f.y+63);
+    }
+    if(f.kind==="Might Guy" && !f.owner){
+      var gm=guyDamageMultiplier(f),gr=Math.round((f.hp/f.max)*100);
+      ctx.fillStyle="#fff";
+      ctx.fillText("Trú Hổ CD: "+Math.ceil(f.guyCD)+"s • LV "+f.guyLevelForBattle+" • "+Math.round((gm-1)*100)+"% DMG",f.x,f.y+63);
+    }
+    if(f.kind==="Might Guy" && !f.owner && f.guyTiger){
+  var tg=f.guyTiger,ta=Math.atan2(tg.vy,tg.vx);
+  ctx.save();ctx.translate(tg.x,tg.y);ctx.rotate(ta);ctx.globalAlpha=Math.min(1,tg.life*2);
+  ctx.shadowBlur=18;ctx.shadowColor="#fff";ctx.fillStyle="#fff";ctx.strokeStyle="#d7dce4";ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(0,0,28,20,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-20,-14);ctx.lineTo(-34,-27);ctx.lineTo(-25,-5);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-20,14);ctx.lineTo(-34,27);ctx.lineTo(-25,5);ctx.fill();ctx.stroke();
+  ctx.fillStyle="#111";ctx.beginPath();ctx.arc(10,-7,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(10,7,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.moveTo(28,0);ctx.lineTo(42,-7);ctx.lineTo(42,7);ctx.closePath();ctx.fill();
+  ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.restore();
+}
+
+if(f.kind==="Zenitsu" && !f.owner){
+      ctx.fillStyle="#fff";
+      if(f.zenitsuCharge>0) ctx.fillText("Phích Lịch Nhất Thiểm: TỤ "+Math.ceil(f.zenitsuCharge)+"s",f.x,f.y+63);
+      else if(f.zenitsuDash>0) ctx.fillText("Phích Lịch Nhất Thiểm: ⚡",f.x,f.y+63);
+      else ctx.fillText("Phích Lịch Nhất Thiểm CD: "+Math.ceil(f.zenitsuCD)+"s",f.x,f.y+63);
+    }
+    if(f.kind==="Kusakabe Atsuya" && !f.owner){
+      ctx.fillStyle="#fff";
+      if(f.kusaDomain)ctx.fillText("Lãnh Địa: "+f.kusaDomain.life.toFixed(1)+"s",f.x,f.y+63);
+      else ctx.fillText("Lãnh Địa CD: "+Math.ceil(f.kusaCD)+"s",f.x,f.y+63);
+    }
+    if(f.kind==="Pain" && !f.owner){
+      if(f.painBlackHole)drawPainBlackHole(f.painBlackHole);
+      painWhiteAura(f);
+      ctx.fillStyle="#fff";
+      if(f.painUltimateCharge>0) ctx.fillText("THẦN LA THIÊN CHINH: "+f.painUltimateCharge.toFixed(1)+"s",f.x,f.y+63);
+      else ctx.fillText("Vạn Tượng Thiên Dẫn CD: "+Math.ceil(f.painCD)+"s • LV "+f.painLevelForBattle,f.x,f.y+63);
+    }
+    if(f.kind==="Todoroki Shoto" && !f.owner){
+      ctx.fillStyle="#fff";
+      if(f.todorokiUltimateCharge>0)ctx.fillText("SÓNG NHIỆT: TỤ "+Math.ceil(f.todorokiUltimateCharge)+"s",f.x,f.y+63);
+      else if(f.todorokiRedSkill)ctx.fillText("🔥 BẠO HỎA QUYỀN!",f.x,f.y+63);
+      else if(f.todorokiBlueSkill)ctx.fillText("❄️ ĐẠI BĂNG HẢI TẢO!",f.x,f.y+63);
+      else if(f.todorokiFire)ctx.fillText("ĐƯỜNG LỬA!",f.x,f.y+63);
+      else if(f.todorokiIce)ctx.fillText("ĐƯỜNG BĂNG TỐC ĐỘ!",f.x,f.y+63);
+      else ctx.fillText("Todoroki • CD "+Math.ceil(f.todorokiCD)+"s • LV "+f.todorokiLevelForBattle,f.x,f.y+63);
+    }
+    if(f.skillFlash>0){
+      var pulse=1+(0.55-f.skillFlash)*2.2;
+      ctx.beginPath();ctx.arc(f.x,f.y,f.r+10+pulse*18,0,Math.PI*2);
+      ctx.strokeStyle="#fff";ctx.lineWidth=5;ctx.globalAlpha=Math.min(1,f.skillFlash*1.5);ctx.stroke();
+      ctx.globalAlpha=1;
+    }
+    if(f.kind==="Luffy Kid" && f.skillFlash>0){
+      ctx.save();
+      ctx.translate(f.x,f.y);
+      ctx.rotate(f.skillDir||0);
+      var skin="#f2c6a0", skinDark="#8f5f43", skinLight="#e8b58e";
+      ctx.lineCap="round";ctx.lineJoin="round";
+
+      // Long rubber arm.
+      ctx.strokeStyle=skin;ctx.lineWidth=22;
+      ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(86,0);ctx.stroke();
+      ctx.strokeStyle=skinDark;ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(86,0);ctx.stroke();
+
+      // Skin-colored fist.
+      ctx.fillStyle=skin;ctx.strokeStyle=skinDark;ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.roundRect(78,-16,38,32,10);
+      ctx.fill();ctx.stroke();
+
+      // Knuckles/fingers.
+      ctx.fillStyle=skinLight;
+      ctx.fillRect(84,-11,7,22);
+      ctx.fillRect(93,-11,7,22);
+      ctx.fillRect(102,-10,7,20);
+
+      // Thumb.
+      ctx.fillStyle=skin;
+      ctx.beginPath();ctx.arc(113,5,9,0,Math.PI*2);ctx.fill();ctx.stroke();
+
+      ctx.restore();
+    }
+  });
+}
+
+tap($("pauseBtn"),function(){if(running){paused=true;$("pauseBox").classList.remove("hide");}});
+tap($("resume"),function(){paused=false;$("pauseBox").classList.add("hide");});
+tap($("quit"),function(){$("pauseBox").classList.add("hide");$("confirmBox").classList.remove("hide");});
+tap($("noQuit"),function(){$("confirmBox").classList.add("hide");$("pauseBox").classList.remove("hide");});
+tap($("yesQuit"),function(){running=false;paused=false;$("confirmBox").classList.add("hide");show("select");});
+tap($("again"),function(){startGame();});
+tap($("winBack"),function(){running=false;show("home");});
+
+})();
+</script>
+
+<script>
+var fpsEl=document.getElementById("fpsCounter"),fpsFrames=0,fpsStamp=performance.now();
+</script>
+
+</body>
+</html>
